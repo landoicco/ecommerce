@@ -47,7 +47,7 @@ public class CSVDataLoader implements CommandLineRunner {
 
         // Process CSV
         String[] data = line.split(",");
-        if (data.length == 4) {
+        if (data.length == 7) {
           String name = data[0].trim(),
               sku = data[1].trim(),
               description = data[2].trim(),
@@ -65,10 +65,13 @@ public class CSVDataLoader implements CommandLineRunner {
                   Float.parseFloat(stockString),
                   Integer.parseInt(stockString),
                   Float.parseFloat(weightKgString));
+
+          // Store in database
           productRepository.save(product);
         }
       }
       System.out.println("Data stored in database!");
+      System.out.println("Entries in database: " + productRepository.count());
     } catch (Exception e) {
       System.err.println("Error while loading CSV: " + e.getMessage());
     }
