@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(originPatterns = "http://localhost:[*]") // To support dev and "prod" ports (5173/8080)
 public class ProductController {
 
   private final ProductRepository productRepository;
