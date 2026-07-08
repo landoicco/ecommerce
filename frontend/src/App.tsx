@@ -2,12 +2,11 @@ import { useProducts } from "./commons/useProducts";
 import ProductCard from "./components/ProductCard";
 
 export default function App() {
-  const { products, error } = useProducts();
+  const { products, error, deleteProduct } = useProducts();
 
   return (
     <div className="min-h-screen bg-[#fafafa] py-12 px-4 sm:px-6 lg:px-8 text-gray-900 font-sans antialiased">
       <div className="max-w-5xl mx-auto">
-
         {/* Minimalist Header */}
         <header className="border-b border-gray-100 pb-6 mb-10">
           <h1 className="text-xl font-medium tracking-tight">Inventory</h1>
@@ -25,13 +24,12 @@ export default function App() {
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {products.map((product) => (
-                <ProductCard key={product.id} product={product} onDelete={() => {}} />
+              <ProductCard key={product.id} product={product} onDelete={deleteProduct} />
             ))}
           </div>
         ) : (
           !error && <p className="text-xs text-gray-400 text-center py-10">No products found.</p>
         )}
-
       </div>
     </div>
   );

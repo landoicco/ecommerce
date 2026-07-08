@@ -17,5 +17,23 @@ export function useProducts() {
       .catch((err) => setError(err instanceof Error ? err.message : "API Error"));
   }, []);
 
-  return { products, error };
+  const deleteProduct = async (id: number) => {
+    try {
+      const response = await fetch(`${API_URL}/delete/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete item: ${response.status}`);
+      }
+
+      // Remove element from local state
+      setProducts((prevProducts) => prevProducts.filter((product) => product.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Could not delete product from database");
+    }
+  };
+
+  return { products, error, deleteProduct };
 }
