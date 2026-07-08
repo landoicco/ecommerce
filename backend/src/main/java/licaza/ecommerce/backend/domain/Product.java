@@ -14,7 +14,7 @@ import lombok.Setter;
 @Table(name = "products")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // Requerido por JPA
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
 
   @Id @GeneratedValue private Long id;
