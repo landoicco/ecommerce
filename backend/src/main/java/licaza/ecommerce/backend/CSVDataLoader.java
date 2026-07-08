@@ -62,7 +62,7 @@ public class CSVDataLoader implements CommandLineRunner {
                   sku,
                   description,
                   category,
-                  Float.parseFloat(stockString),
+                  Float.parseFloat(priceString),
                   Integer.parseInt(stockString),
                   Float.parseFloat(weightKgString));
 
