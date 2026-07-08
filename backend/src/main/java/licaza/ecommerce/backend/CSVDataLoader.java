@@ -52,7 +52,7 @@ public class CSVDataLoader implements CommandLineRunner {
               sku = data[1].trim(),
               description = data[2].trim(),
               category = data[3].trim(),
-              priceString = data[4].trim(),
+              priceString = data[4].replace("$", "").trim(),
               stockString = data[5].trim(),
               weightKgString = data[6].trim();
 
