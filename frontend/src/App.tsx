@@ -15,7 +15,7 @@ const EMPTY_FORM: Omit<Product, "id"> = {
 };
 
 export default function App() {
-  const { products, error, deleteProduct, addProduct, updateProduct } = useProducts();
+  const { products, error, deleteProduct, addProduct, updateProduct, buyProduct } = useProducts();
   const [searchQuery, setSearchQuery] = useState("");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -103,6 +103,7 @@ export default function App() {
                 product={product}
                 onDelete={deleteProduct}
                 onEdit={handleOpenEdit}
+                onBuy={buyProduct}
               />
             ))}
           </div>

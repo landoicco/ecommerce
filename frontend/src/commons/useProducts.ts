@@ -74,5 +74,17 @@ export function useProducts() {
     }
   };
 
-  return { products, error, deleteProduct, updateProduct, addProduct };
+  // BUY A PRODUCT
+  const buyProduct = async (product: Product) => {
+    if (product.stock <= 0) return;
+
+    const updatedProduct: Product = {
+      ...product,
+      stock: product.stock - 1,
+    };
+
+    await updateProduct(product.id, updatedProduct);
+  };
+
+  return { products, error, deleteProduct, updateProduct, addProduct, buyProduct };
 }
