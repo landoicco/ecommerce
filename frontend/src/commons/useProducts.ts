@@ -7,7 +7,8 @@ export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // READ
+  const fetchProducts = () => {
     fetch(API_URL)
       .then((res) => {
         if (!res.ok) throw new Error(`Error: ${res.status}`);
@@ -15,8 +16,46 @@ export function useProducts() {
       })
       .then((data: Product[]) => setProducts(data))
       .catch((err) => setError(err instanceof Error ? err.message : "API Error"));
+  };
+
+  // Ensure we fetch items at first
+  useEffect(() => {
+    fetchProducts();
   }, []);
 
+  // CREATE
+  const addProduct = async (newProduct: Omit<Product, "id">) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProduct),
+      });
+      if (!response.ok) throw new Error("Failed to create product");
+      fetchProducts(); // Refresh local state with new data
+    } catch (err) {
+      console.error(err);
+      alert("Error saving product");
+    }
+  };
+
+  // UPDATE
+  const updateProduct = async (id: number, updatedFields: Partial<Product>) => {
+    try {
+      const response = await fetch(`${API_URL}/edit/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedFields),
+      });
+      if (!response.ok) throw new Error("Failed to update product");
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Error updating product");
+    }
+  };
+
+  // DELETE
   const deleteProduct = async (id: number) => {
     try {
       const response = await fetch(`${API_URL}/delete/${id}`, {
@@ -35,5 +74,5 @@ export function useProducts() {
     }
   };
 
-  return { products, error, deleteProduct };
+  return { products, error, deleteProduct, updateProduct, addProduct };
 }
