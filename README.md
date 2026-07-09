@@ -1,6 +1,6 @@
 # Simple E-Commerce CRUD Application
 
-This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing an in-memory H2 database for rapid development and testing.
+This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing a containerized MariaDB database for robust and persistent data storage.
 
 The core philosophy of this project is to remain as simple and effective as possible, strictly adhering to the **YAGNI** (You Aren't Gonna Need It) design principle.
 
@@ -8,7 +8,7 @@ The core philosophy of this project is to remain as simple and effective as poss
 
 * **Frontend:** React, Vite & Tailwind CSS
 * **Backend:** Java, Maven & Spring Boot
-* **Database:** H2 (In-Memory)
+* **Database:** MariaDB 11.0
 * **Containers:** Docker (v24.0.7+) & Docker Compose (v2.21.0+)
 
 ## Features
@@ -41,11 +41,11 @@ docker compose up
 
 The `docker-compose.yml` file is configured to manage service dependencies automatically, ensuring the environment initializes in the correct sequence:
 ```
-BACKEND => FRONTEND
+DATABASE => BACKEND => FRONTEND
 ```
 ### Accessing the Application
 
-Once the initialization is complete (you can verify the container status by running `docker ps`), open your web browser and navigate to the local environment:
+Once the initialization is complete (you can verify the container status by running `docker ps`, which should show three active containers at this point), open your web browser and navigate to the local environment:
 ```
 http://localhost:3000/
 ```
@@ -79,8 +79,15 @@ http://localhost:8080/api/products
 ## Design Choices
 
 ### Data Seeding and Initialization
-The application initializes its state using dataset records parsed from a local CSV file. To streamline this process, we utilize Spring's `CommandLineRunner` interface to automatically parse and load the data into the H2 database at application startup. This architecture guarantees that a complete dataset is fully available to the user the moment the frontend interface loads.
+The application initializes its state using dataset records parsed from a local CSV file. To streamline this process, we utilize Spring's `CommandLineRunner` interface to automatically parse and load the data into the MariaDB database at application startup. This architecture guarantees that a complete dataset is fully available to the user the moment the frontend interface loads.
+
+**Note:** The CSV mockup dataset was retrieved on July 7, 2026. The source file utilized for data seeding is located within the `backend/src/main/resources` directory.
 
 ### Monolithic Single-Page UI
 To strictly adhere to the **YAGNI** (You Aren't Gonna Need It) design principle, the entire frontend is structured around a single-page dashboard. Features are implemented exclusively to satisfy core system requirements without introducing speculative complexity or redundant routing frameworks. This architectural choice prioritizes a high-utility, zero-overhead solution that remains highly maintainable.
+
+### Why MariaDB?
+During early development, we utilized an in-memory H2 database to accelerate prototyping. Once all core features were stabilized, we migrated to a production-grade database to demonstrate the application's readiness for real-world operations. 
+
+Leveraging Spring Boot’s repository pattern made this transition seamless; it only required updating the dependencies in the `pom.xml` file and adjusting the `application.properties` configuration. Furthermore, thanks to Docker Compose, integrating MariaDB as a dedicated service was straightforward, keeping the infrastructure clean and maintainable.
 
