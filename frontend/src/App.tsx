@@ -11,7 +11,6 @@ const EMPTY_FORM: Omit<Product, "id"> = {
   price: 0,
   stock: 0,
   weightKg: 0,
-  image: "",
 };
 
 export default function App() {
@@ -46,7 +45,6 @@ export default function App() {
       price: product.price,
       stock: product.stock,
       weightKg: product.weightKg,
-      image: product.image,
     });
     setIsPanelOpen(true);
   };
@@ -67,14 +65,14 @@ export default function App() {
         {/* Header */}
         <header className="border-b border-gray-100 pb-6 mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-medium tracking-tight">Inventory</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Database CRUD Operations</p>
+            <h1 className="text-xl font-medium tracking-tight">Inventory Terminal</h1>
+            <p className="text-xs text-gray-400 mt-0.5">Technical catalog management</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Filter by name, SKU or category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full md:w-64 text-xs bg-white border border-gray-100 rounded-md px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-gray-300 transition-colors"
@@ -83,7 +81,7 @@ export default function App() {
               onClick={handleOpenCreate}
               className="w-full sm:w-auto text-xs font-medium px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors cursor-pointer whitespace-nowrap"
             >
-              Add Product
+              Add Item
             </button>
           </div>
         </header>
@@ -94,7 +92,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Grid */}
+        {/* Grid System */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {filteredProducts.map((product) => (
@@ -109,21 +107,19 @@ export default function App() {
           </div>
         ) : (
           !error && (
-            <p className="text-xs text-gray-400 text-center py-10">
-              No products match your criteria.
-            </p>
+            <p className="text-xs text-gray-400 text-center py-10">No items match your criteria.</p>
           )
         )}
       </div>
 
       {/* Slide-over Drawer Panel */}
       {isPanelOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/10 backdrop-blur-xs transition-opacity">
-          <div className="w-full max-w-md bg-white h-screen p-6 shadow-2xl border-l border-gray-100 flex flex-col justify-between animate-in slide-in-from-right duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/5 backdrop-blur-xs transition-opacity">
+          <div className="w-full max-w-md bg-white h-screen p-6 shadow-2xl border-l border-gray-100 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-gray-50">
                 <h2 className="text-sm font-medium text-gray-900">
-                  {editingProduct ? `Edit ${editingProduct.sku}` : "New Product"}
+                  {editingProduct ? `Modify ${editingProduct.sku}` : "New Database Record"}
                 </h2>
                 <button
                   onClick={() => setIsPanelOpen(false)}
@@ -135,7 +131,7 @@ export default function App() {
 
               <form id="crud-form" onSubmit={handleSubmit} className="mt-6 space-y-4 text-xs">
                 <div>
-                  <label className="block font-medium text-gray-500 mb-1">Product Name</label>
+                  <label className="block font-medium text-gray-500 mb-1">Item Name</label>
                   <input
                     required
                     type="text"
@@ -170,7 +166,7 @@ export default function App() {
                 <div>
                   <label className="block font-medium text-gray-500 mb-1">Description</label>
                   <textarea
-                    rows={3}
+                    rows={4}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-100 rounded px-3 py-2 focus:outline-none focus:bg-white focus:border-gray-300 resize-none"
@@ -220,18 +216,6 @@ export default function App() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block font-medium text-gray-500 mb-1">
-                    Image URL (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-100 rounded px-3 py-2 focus:outline-none focus:bg-white focus:border-gray-300"
-                  />
-                </div>
               </form>
             </div>
 
@@ -241,7 +225,7 @@ export default function App() {
                 form="crud-form"
                 className="w-full text-xs font-medium py-2.5 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                {editingProduct ? "Save Changes" : "Create Product"}
+                {editingProduct ? "Save Item Changes" : "Save to Database"}
               </button>
             </div>
           </div>
