@@ -1,5 +1,10 @@
 node_modules
 dist
+.vite
 .git
 Dockerfile
 .dockerignore
+.prettierrc
+.prettierignore
+package-lock.json
+README.md
