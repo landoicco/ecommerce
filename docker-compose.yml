@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  backend:
+    build: backend/
+    image: ecommerce-backend-img
+    container_name: ecommerce-backend-cont
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    build: frontend/
+    image: ecommerce-client-img
+    container_name: ecommerce-frontend-cont
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
