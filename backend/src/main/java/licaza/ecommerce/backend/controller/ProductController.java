@@ -1,7 +1,9 @@
 package licaza.ecommerce.backend.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
-import licaza.ecommerce.backend.domain.Product;
+import licaza.ecommerce.backend.dto.ProductRequestDTO;
+import licaza.ecommerce.backend.dto.ProductResponseDTO;
 import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,29 +22,29 @@ public class ProductController {
   }
 
   @GetMapping
-  public ResponseEntity<List<Product>> getAllProducts() {
+  public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
     return ResponseEntity.ok(productService.getAllProducts());
   }
 
   @PostMapping
-  public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-    Product savedProduct = productService.createProduct(product);
+  public ResponseEntity<ProductResponseDTO> createProduct(
+      @Valid @RequestBody ProductRequestDTO productDTO) {
+    ProductResponseDTO savedProduct = productService.createProduct(productDTO);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
   }
 
   @PutMapping("/edit/{id}")
-  public ResponseEntity<Product> updateProduct(
-      @PathVariable Long id, @RequestBody Product productDetails) {
+  public ResponseEntity<ProductResponseDTO> updateProduct(
+      @PathVariable Long id, @Valid @RequestBody ProductRequestDTO productDTO) {
     return productService
-        .updateProduct(id, productDetails)
+        .updateProduct(id, productDTO)
         .map(ResponseEntity::ok)
         .orElse(ResponseEntity.notFound().build());
   }
 
   @DeleteMapping("/delete/{id}")
   public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-    boolean deleted = productService.deleteProduct(id);
-    if (deleted) {
+    if (productService.deleteProduct(id)) {
       return ResponseEntity.noContent().build();
     }
     return ResponseEntity.notFound().build();
