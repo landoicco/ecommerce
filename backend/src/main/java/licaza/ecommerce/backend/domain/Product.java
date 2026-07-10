@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,21 +28,21 @@ public class Product {
 
   private String category;
 
-  private float price;
+  private BigDecimal price;
 
   private int stock;
 
   @Column(name = "weight_kg")
-  private float weightKg;
+  private double weightKg;
 
   public Product(
       String name,
       String sku,
       String description,
       String category,
-      float price,
+      BigDecimal price,
       int stock,
-      float weightKg) {
+      double weightKg) {
     this.name = name;
     this.sku = sku;
     this.description = description;
