@@ -69,7 +69,6 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
               </button>
             </div>
           </div>
-
           <button
             onClick={() => onBuy(product)}
             disabled={isOutOfStock}
@@ -79,7 +78,7 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
                 : "bg-gray-900 text-white hover:bg-gray-800"
             }`}
           >
-            {isOutOfStock ? "Sold Out" : "Buy Unit"}
+            {isOutOfStock ? "Sold Out" : "Buy"}
           </button>
         </div>
       </div>
