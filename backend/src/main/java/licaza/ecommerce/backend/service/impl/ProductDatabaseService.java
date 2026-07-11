@@ -1,5 +1,6 @@
 package licaza.ecommerce.backend.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -155,8 +156,8 @@ public class ProductDatabaseService implements ProductService {
             .findById(purchaseDTO.productId())
             .orElseThrow(
                 () ->
-                    new RuntimeException(
-                        "ERROR: Product not found with ID: " + purchaseDTO.productId()));
+                    new EntityNotFoundException(
+                        "Product not found with ID: " + purchaseDTO.productId()));
 
     if (product.getStock() < purchaseDTO.quantity()) {
       String outOfStockMsg =
@@ -194,10 +195,15 @@ public class ProductDatabaseService implements ProductService {
       // Save product. @Version protect against race conditions
       productRepository.save(product);
 
-      // [TEST] Simulate payment rejection, if user requests exactly 99 items
+      /* [TEST] This snippets pretends to simulate a checkout failed due a
+       *  card declined. This will be triggered when requesting exactly 99 items.
+       */
       if (purchaseDTO.quantity() == 99) {
         System.out.println("INFO: Simulating a declined payment gateway transition.");
-        throw new RuntimeException("Payment rejected by bank.");
+        String msg = "Card declined. Insufficient funds.";
+        order.setStatus(OrderStatus.FAILED);
+        orderRepository.save(order);
+        throw new CheckoutFailedException(msg, convertToOrderResponseDTO(order, msg));
       }
 
       // At this point, Order is paid
@@ -210,11 +216,16 @@ public class ProductDatabaseService implements ProductService {
 
     } catch (ObjectOptimisticLockingFailureException e) {
       // Handling Race Conditions
-      System.err.println("WARN: Race condition detected during checkout transition.");
+      System.err.println("WARN: Race condition detected. Updating order status to FAILED.");
       order.setStatus(OrderStatus.FAILED);
-      orderRepository.save(order);
-      throw new RuntimeException("ERROR: Product state changed during checkout. Please try again.");
+      order = orderRepository.save(order); // We save the FAILED order for persistance
 
+      String conflictMsg =
+          "ERROR: The product inventory changed during checkout. Please try again.";
+      OrderResponseDTO failedOrderDTO = convertToOrderResponseDTO(order, conflictMsg);
+
+      // Throw exception to ensure stock rollback and send DTO with data
+      throw new CheckoutFailedException(conflictMsg, failedOrderDTO);
     } catch (Exception e) {
       String errorMsg = "ERROR: Checkout failed. " + e.getMessage();
       System.err.println("WARN: Payment failed. Rolling back stock transition.");

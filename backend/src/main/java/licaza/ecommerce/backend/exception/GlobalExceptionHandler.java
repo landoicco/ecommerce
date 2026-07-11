@@ -1,5 +1,6 @@
 package licaza.ecommerce.backend.exception;
 
+import jakarta.persistence.EntityNotFoundException;
 import licaza.ecommerce.backend.dto.OrderResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,5 +23,11 @@ public class GlobalExceptionHandler {
   public ResponseEntity<String> handleInsufficientStock(InsufficientStockException ex) {
     // Return 400 Bad Request with the insufficient stock explanation
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity<String> handleNotFound(EntityNotFoundException ex) {
+    // Return 404 Not Found
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
   }
 }
