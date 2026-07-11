@@ -1,7 +1,9 @@
 package licaza.ecommerce.backend.service.impl;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import licaza.ecommerce.backend.domain.Product;
 import licaza.ecommerce.backend.dto.ProductRequestDTO;
@@ -34,6 +36,86 @@ public class ProductDatabaseService implements ProductService {
 
     Product savedProduct = productRepository.save(product);
     return convertToResponseDTO(savedProduct);
+  }
+
+  @Override
+  public List<ProductResponseDTO> createProductsBatch(List<ProductRequestDTO> requestDTOs) {
+    // Set to identify duplicates on the CSV
+    Set<String> seenSkusInBatch = new HashSet<>();
+
+    // Get all SKUs that pass basic NULL filters
+    List<String> skusInRequest =
+        requestDTOs.stream()
+            .filter(dto -> dto.price() != null && dto.stock() != null)
+            .map(ProductRequestDTO::sku)
+            .collect(Collectors.toList());
+
+    // Get existing SKUs from database
+    List<String> existingSkusInDb = productRepository.findSkuBySkuIn(skusInRequest);
+    Set<String> existingSkusSet = new HashSet<>(existingSkusInDb); // Set to improve search speed
+
+    // Filter in-memory
+    List<Product> productsToSave =
+        requestDTOs.stream()
+            .filter(
+                dto -> {
+                  if (dto.price() == null) {
+                    System.out.println(
+                        "WARN: Skipping CSV row. Product with SKU '"
+                            + dto.sku()
+                            + "' has an invalid or missing price.");
+                    return false;
+                  }
+                  if (dto.stock() == null) {
+                    System.out.println(
+                        "WARN: Skipping CSV row. Product with SKU '"
+                            + dto.sku()
+                            + "' has an invalid or missing stock.");
+                    return false;
+                  }
+                  if (!seenSkusInBatch.add(dto.sku())) {
+                    System.out.println(
+                        "WARN: Skipping CSV row. SKU '"
+                            + dto.sku()
+                            + "' is duplicated within the same CSV file.");
+                    return false;
+                  }
+
+                  // Validate using existing SKU set from database
+                  if (existingSkusSet.contains(dto.sku())) {
+                    System.out.println(
+                        "WARN: Skipping product from CSV. SKU '"
+                            + dto.sku()
+                            + "' already exists in the database.");
+                    return false;
+                  }
+                  return true;
+                })
+            .map(
+                dto -> {
+                  // Map only unique and valid entries
+                  Product product = new Product();
+                  product.setId(null);
+                  product.setName(dto.name());
+                  product.setSku(dto.sku());
+                  product.setDescription(dto.description());
+                  product.setCategory(dto.category());
+                  product.setPrice(dto.price());
+                  product.setStock(dto.stock());
+                  product.setWeightKg(dto.weightKg());
+                  return product;
+                })
+            .collect(Collectors.toList());
+
+    if (productsToSave.isEmpty()) {
+      System.out.println("INFO: No new or valid products found in the CSV to insert.");
+      return List.of();
+    }
+
+    // Batch saving
+    List<Product> savedProducts = productRepository.saveAll(productsToSave);
+
+    return savedProducts.stream().map(this::convertToResponseDTO).collect(Collectors.toList());
   }
 
   @Override

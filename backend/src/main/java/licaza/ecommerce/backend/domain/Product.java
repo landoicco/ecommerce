@@ -32,10 +32,10 @@ public class Product {
 
   private BigDecimal price;
 
-  private int stock;
+  private Integer stock;
 
   @Column(name = "weight_kg")
-  private double weightKg;
+  private Double weightKg;
 
   public Product(
       String name,

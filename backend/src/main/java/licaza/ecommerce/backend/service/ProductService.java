@@ -10,6 +10,8 @@ public interface ProductService {
 
   ProductResponseDTO createProduct(ProductRequestDTO requestDTO);
 
+  List<ProductResponseDTO> createProductsBatch(List<ProductRequestDTO> requestDTOs);
+
   Optional<ProductResponseDTO> updateProduct(Long id, ProductRequestDTO requestDTO);
 
   boolean deleteProduct(Long id);
