@@ -52,7 +52,6 @@ export default function App() {
   };
 
   const handleConfirmPurchase = async (product: Product, quantity: number) => {
-    console.log(`Units sold: ${quantity}`);
     await buyProduct(product, quantity);
     setBuyingProduct(null);
   };

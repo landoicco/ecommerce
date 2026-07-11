@@ -62,10 +62,15 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
                   return;
                 }
 
-                // This help to ensure the user is only able to buy the available stock
-                // if (val < 1) setBuyQuantity(1);
-                // else if (val > product.stock) setBuyQuantity(product.stock);
-                // else setBuyQuantity(val);
+                /* This three lines of code help to force the user to only buy
+                /* the available products on stock.
+                /* However, we will comment this for now to prove that the backend is
+                /* also able to handle this scenario, but please note, keeping
+                /* this lines are way better for user experience.
+                /*
+                /* if (val < 1) setBuyQuantity(1);
+                /* else if (val > product.stock) setBuyQuantity(product.stock);
+                /* else setBuyQuantity(val); */
                 setBuyQuantity(val); // Trick to test backend exceptions
               }}
               onBlur={() => {

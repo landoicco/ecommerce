@@ -98,6 +98,7 @@ export function useProducts() {
         const msg =
           `YOUR PURCHASE STATUS:\n\n` +
           `• Status: ${data.status}\n` +
+          `• Total to pay: ${data.totalAmount}\n` +
           `• Message: ${data.message}\n`;
         alert(msg);
       } catch {
@@ -106,6 +107,8 @@ export function useProducts() {
         const msg = `BACKEND SAYS:\n\n` + `• Message: ${data}\n`;
         alert(msg);
       }
+      // Fetch products to update UI
+      fetchProducts();
     } catch (err) {
       console.error(err);
     }
