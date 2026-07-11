@@ -6,11 +6,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import licaza.ecommerce.backend.domain.Product;
-import licaza.ecommerce.backend.dto.ProductRequestDTO;
-import licaza.ecommerce.backend.dto.ProductResponseDTO;
+import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.repo.ProductRepository;
 import licaza.ecommerce.backend.service.ProductService;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductDatabaseService implements ProductService {
@@ -137,6 +138,44 @@ public class ProductDatabaseService implements ProductService {
     }
     productRepository.deleteById(id);
     return true;
+  }
+
+  @Override
+  @Transactional
+  public ProductResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO) {
+    // Search product by ID
+    Product product =
+        productRepository
+            .findById(purchaseDTO.productId())
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "ERROR: Product not found with ID: " + purchaseDTO.productId()));
+
+    // Verify stock
+    if (product.getStock() < purchaseDTO.quantity()) {
+      throw new RuntimeException("ERROR: Insufficient stock for product: " + product.getName());
+    }
+
+    // Simulate payment
+    System.out.println(
+        "INFO: Processing payment for "
+            + purchaseDTO.quantity()
+            + " units of "
+            + product.getName());
+
+    // Decrease stock
+    product.setStock(product.getStock() - purchaseDTO.quantity());
+
+    // Save changes, Hibernate verify @Version at this point
+    try {
+      Product updatedProduct = productRepository.save(product);
+      return convertToResponseDTO(updatedProduct);
+    } catch (ObjectOptimisticLockingFailureException e) {
+      // Just in case of Race Conditions
+      System.err.println("WARN: Race condition detected for product ID: " + product.getId());
+      throw new RuntimeException("ERROR: The product inventory changed. Please try again.");
+    }
   }
 
   // Utility methods (Mappers)

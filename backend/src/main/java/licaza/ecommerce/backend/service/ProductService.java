@@ -2,8 +2,7 @@ package licaza.ecommerce.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-import licaza.ecommerce.backend.dto.ProductRequestDTO;
-import licaza.ecommerce.backend.dto.ProductResponseDTO;
+import licaza.ecommerce.backend.dto.*;
 
 public interface ProductService {
   List<ProductResponseDTO> getAllProducts();
@@ -15,4 +14,6 @@ public interface ProductService {
   Optional<ProductResponseDTO> updateProduct(Long id, ProductRequestDTO requestDTO);
 
   boolean deleteProduct(Long id);
+
+  ProductResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO);
 }
