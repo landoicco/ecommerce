@@ -89,9 +89,23 @@ export function useProducts() {
         }),
       });
 
-      // if (!response.ok) throw new Error("Error on purchase");
-      // Test, process response here
-      console.log(await response.json());
+      // Process response, if is a JSON or plain text
+      const rawText = await response.text();
+      let data: any;
+      try {
+        // Try to parse as JSON
+        data = JSON.parse(rawText);
+        const msg =
+          `YOUR PURCHASE STATUS:\n\n` +
+          `• Status: ${data.status}\n` +
+          `• Message: ${data.message}\n`;
+        alert(msg);
+      } catch {
+        // If parse fail, then is plain text
+        data = rawText;
+        const msg = `BACKEND SAYS:\n\n` + `• Message: ${data}\n`;
+        alert(msg);
+      }
     } catch (err) {
       console.error(err);
     }

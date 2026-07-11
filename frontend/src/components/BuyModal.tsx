@@ -36,7 +36,8 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
         {/* Quantity selector */}
         <div className="my-4 bg-gray-50 rounded-lg p-3 border border-gray-100/80 flex items-center justify-between">
           <span className="text-gray-500 font-medium">Quantity:</span>
-          <div className="flex items-center gap-3 font-mono">
+          <div className="flex items-center gap-2 font-mono">
+            {/* Remove button */}
             <button
               type="button"
               disabled={buyQuantity <= 1}
@@ -45,9 +46,36 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
             >
               -
             </button>
-            <span className="font-semibold text-sm text-gray-800 w-4 text-center">
-              {buyQuantity}
-            </span>
+
+            {/* Keyboard input */}
+            <input
+              type="number"
+              min={1}
+              max={product.stock}
+              value={buyQuantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+
+                // Change state to empty if data is deleted
+                if (isNaN(val)) {
+                  setBuyQuantity("" as any);
+                  return;
+                }
+
+                // This help to ensure the user is only able to buy the available stock
+                // if (val < 1) setBuyQuantity(1);
+                // else if (val > product.stock) setBuyQuantity(product.stock);
+                // else setBuyQuantity(val);
+                setBuyQuantity(val); // Trick to test backend exceptions
+              }}
+              onBlur={() => {
+                // If user quit foucs, change to back to 1
+                if (!buyQuantity || isNaN(buyQuantity)) setBuyQuantity(1);
+              }}
+              className="w-12 h-6 bg-white border border-gray-200 text-gray-800 text-center rounded font-semibold focus:outline-none focus:border-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+
+            {/* Add button */}
             <button
               type="button"
               disabled={buyQuantity >= product.stock}
