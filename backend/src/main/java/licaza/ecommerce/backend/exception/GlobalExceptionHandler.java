@@ -17,4 +17,10 @@ public class GlobalExceptionHandler {
     // Return 422 Unprocessable Entity with the same structure
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(failedOrder);
   }
+
+  @ExceptionHandler(InsufficientStockException.class)
+  public ResponseEntity<String> handleInsufficientStock(InsufficientStockException ex) {
+    // Return 400 Bad Request with the insufficient stock explanation
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+  }
 }

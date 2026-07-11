@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import licaza.ecommerce.backend.domain.*;
 import licaza.ecommerce.backend.dto.*;
-import licaza.ecommerce.backend.exception.CheckoutFailedException;
+import licaza.ecommerce.backend.exception.*;
 import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -159,8 +159,17 @@ public class ProductDatabaseService implements ProductService {
                         "ERROR: Product not found with ID: " + purchaseDTO.productId()));
 
     if (product.getStock() < purchaseDTO.quantity()) {
-      System.out.println("WARN: Insufficient stock for product ID: " + product.getId());
-      throw new RuntimeException("ERROR: Insufficient stock.");
+      String outOfStockMsg =
+          "ERROR: Insufficient stock for product: "
+              + product.getName()
+              + " (Requested: "
+              + purchaseDTO.quantity()
+              + ", Available: "
+              + product.getStock()
+              + ")";
+      System.out.println("WARN: " + outOfStockMsg);
+
+      throw new InsufficientStockException(outOfStockMsg);
     }
 
     // Get total cost
