@@ -15,5 +15,5 @@ public interface ProductService {
 
   boolean deleteProduct(Long id);
 
-  ProductResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO);
+  OrderResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO);
 }

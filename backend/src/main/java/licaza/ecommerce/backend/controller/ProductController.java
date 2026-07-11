@@ -50,9 +50,9 @@ public class ProductController {
   }
 
   @PostMapping("/purchase")
-  public ResponseEntity<ProductResponseDTO> purchaseProduct(
+  public ResponseEntity<OrderResponseDTO> purchaseProduct(
       @Valid @RequestBody PurchaseRequestDTO purchaseDTO) {
-    ProductResponseDTO response = productService.purchaseProduct(purchaseDTO);
+    OrderResponseDTO response = productService.purchaseProduct(purchaseDTO);
     return ResponseEntity.ok(response);
   }
 }

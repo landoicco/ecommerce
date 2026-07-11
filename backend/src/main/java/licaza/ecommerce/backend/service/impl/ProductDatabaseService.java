@@ -1,13 +1,15 @@
 package licaza.ecommerce.backend.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import licaza.ecommerce.backend.domain.Product;
+import licaza.ecommerce.backend.domain.*;
 import licaza.ecommerce.backend.dto.*;
-import licaza.ecommerce.backend.repo.ProductRepository;
+import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductDatabaseService implements ProductService {
 
   private final ProductRepository productRepository;
+  private final OrderRepository orderRepository;
 
-  public ProductDatabaseService(ProductRepository productRepository) {
+  public ProductDatabaseService(
+      ProductRepository productRepository, OrderRepository orderRepository) {
     this.productRepository = productRepository;
+    this.orderRepository = orderRepository;
   }
 
   @Override
@@ -141,9 +146,9 @@ public class ProductDatabaseService implements ProductService {
   }
 
   @Override
-  @Transactional
-  public ProductResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO) {
-    // Search product by ID
+  @Transactional // Atomic consistency
+  public OrderResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO) {
+    // Search product in stock
     Product product =
         productRepository
             .findById(purchaseDTO.productId())
@@ -152,29 +157,60 @@ public class ProductDatabaseService implements ProductService {
                     new RuntimeException(
                         "ERROR: Product not found with ID: " + purchaseDTO.productId()));
 
-    // Verify stock
     if (product.getStock() < purchaseDTO.quantity()) {
-      throw new RuntimeException("ERROR: Insufficient stock for product: " + product.getName());
+      System.out.println("WARN: Insufficient stock for product ID: " + product.getId());
+      throw new RuntimeException("ERROR: Insufficient stock.");
     }
 
-    // Simulate payment
-    System.out.println(
-        "INFO: Processing payment for "
-            + purchaseDTO.quantity()
-            + " units of "
-            + product.getName());
+    // Get total cost
+    BigDecimal totalAmount =
+        product.getPrice().multiply(BigDecimal.valueOf(purchaseDTO.quantity()));
 
-    // Decrease stock
+    // Create Order and change state to PENDING
+    Order order = new Order();
+    order.setProduct(product);
+    order.setQuantity(purchaseDTO.quantity());
+    order.setTotalAmount(totalAmount);
+    order.setStatus(OrderStatus.PENDING);
+    order.setCreatedAt(LocalDateTime.now());
+
+    // Save order
+    order = orderRepository.save(order);
+
+    // Reduce stock
     product.setStock(product.getStock() - purchaseDTO.quantity());
 
-    // Save changes, Hibernate verify @Version at this point
     try {
-      Product updatedProduct = productRepository.save(product);
-      return convertToResponseDTO(updatedProduct);
+      // Save product. @Version protect against race conditions
+      productRepository.save(product);
+
+      // [TEST] Simulate payment rejection, if user requests exactly 99 items
+      if (purchaseDTO.quantity() == 99) {
+        System.out.println("INFO: Simulating a declined payment gateway transition.");
+        throw new RuntimeException("Payment rejected by bank.");
+      }
+
+      // At this point, Order is paid
+      order.setStatus(OrderStatus.PAID);
+      order = orderRepository.save(order);
+
+      System.out.println("INFO: Checkout transition completed successfully. Order PAID.");
+      return convertToOrderResponseDTO(order);
+
     } catch (ObjectOptimisticLockingFailureException e) {
-      // Just in case of Race Conditions
-      System.err.println("WARN: Race condition detected for product ID: " + product.getId());
-      throw new RuntimeException("ERROR: The product inventory changed. Please try again.");
+      // Handling Race Conditions
+      System.err.println("WARN: Race condition detected during checkout transition.");
+      order.setStatus(OrderStatus.FAILED);
+      orderRepository.save(order);
+      throw new RuntimeException("ERROR: Product state changed during checkout. Please try again.");
+
+    } catch (Exception e) {
+      System.err.println("WARN: Payment failed. Rolling back stock transition.");
+      order.setStatus(OrderStatus.FAILED);
+      orderRepository.save(order); // Save the order as FAILED
+
+      // Force exception to force Spring to rollback product stock
+      throw new RuntimeException("ERROR: Checkout failed. " + e.getMessage());
     }
   }
 
@@ -199,5 +235,16 @@ public class ProductDatabaseService implements ProductService {
         entity.getPrice(),
         entity.getStock(),
         entity.getWeightKg());
+  }
+
+  private OrderResponseDTO convertToOrderResponseDTO(Order order) {
+    return new OrderResponseDTO(
+        order.getId(),
+        order.getProduct().getId(),
+        order.getProduct().getName(),
+        order.getQuantity(),
+        order.getTotalAmount(),
+        order.getStatus().name(),
+        order.getCreatedAt());
   }
 }
