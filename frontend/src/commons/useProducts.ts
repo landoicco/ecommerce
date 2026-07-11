@@ -75,15 +75,26 @@ export function useProducts() {
   };
 
   // BUY A PRODUCT
-  const buyProduct = async (product: Product) => {
-    if (product.stock <= 0) return;
+  const buyProduct = async (product: Product, quantity: number) => {
+    try {
+      const response = await fetch(`${API_URL}/purchase`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Send object expected by backend
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: quantity,
+        }),
+      });
 
-    const updatedProduct: Product = {
-      ...product,
-      stock: product.stock - 1,
-    };
-
-    await updateProduct(product.id, updatedProduct);
+      // if (!response.ok) throw new Error("Error on purchase");
+      // Test, process response here
+      console.log(await response.json());
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return { products, error, deleteProduct, updateProduct, addProduct, buyProduct };
