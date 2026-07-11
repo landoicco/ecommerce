@@ -10,4 +10,5 @@ public record OrderResponseDTO(
     Integer quantity,
     BigDecimal totalAmount,
     String status,
+    String message,
     LocalDateTime createdAt) {}

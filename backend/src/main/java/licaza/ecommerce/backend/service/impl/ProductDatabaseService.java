@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import licaza.ecommerce.backend.domain.*;
 import licaza.ecommerce.backend.dto.*;
+import licaza.ecommerce.backend.exception.CheckoutFailedException;
 import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -194,8 +195,9 @@ public class ProductDatabaseService implements ProductService {
       order.setStatus(OrderStatus.PAID);
       order = orderRepository.save(order);
 
-      System.out.println("INFO: Checkout transition completed successfully. Order PAID.");
-      return convertToOrderResponseDTO(order);
+      String msg = "INFO: Checkout transition completed successfully. Order PAID.";
+      System.out.println(msg);
+      return convertToOrderResponseDTO(order, msg);
 
     } catch (ObjectOptimisticLockingFailureException e) {
       // Handling Race Conditions
@@ -205,12 +207,16 @@ public class ProductDatabaseService implements ProductService {
       throw new RuntimeException("ERROR: Product state changed during checkout. Please try again.");
 
     } catch (Exception e) {
+      String errorMsg = "ERROR: Checkout failed. " + e.getMessage();
       System.err.println("WARN: Payment failed. Rolling back stock transition.");
+
       order.setStatus(OrderStatus.FAILED);
       orderRepository.save(order); // Save the order as FAILED
 
-      // Force exception to force Spring to rollback product stock
-      throw new RuntimeException("ERROR: Checkout failed. " + e.getMessage());
+      OrderResponseDTO failedOrderDTO = convertToOrderResponseDTO(order, errorMsg);
+
+      // Send to GlobalExceptionHandler
+      throw new CheckoutFailedException(errorMsg, failedOrderDTO);
     }
   }
 
@@ -237,7 +243,7 @@ public class ProductDatabaseService implements ProductService {
         entity.getWeightKg());
   }
 
-  private OrderResponseDTO convertToOrderResponseDTO(Order order) {
+  private OrderResponseDTO convertToOrderResponseDTO(Order order, String message) {
     return new OrderResponseDTO(
         order.getId(),
         order.getProduct().getId(),
@@ -245,6 +251,7 @@ public class ProductDatabaseService implements ProductService {
         order.getQuantity(),
         order.getTotalAmount(),
         order.getStatus().name(),
+        message,
         order.getCreatedAt());
   }
 }
