@@ -1,11 +1,14 @@
 package licaza.ecommerce.backend;
 
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import licaza.ecommerce.backend.domain.Product;
-import licaza.ecommerce.backend.repo.ProductRepository;
+import java.io.Reader;
+import java.util.List;
+import java.util.stream.Collectors;
+import licaza.ecommerce.backend.dto.*;
+import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -13,68 +16,73 @@ import org.springframework.stereotype.Component;
 @Component
 public class CSVDataLoader implements CommandLineRunner {
 
-  private final ProductRepository productRepository;
+  private final ProductService productService;
 
-  public CSVDataLoader(ProductRepository productRepository) {
-    this.productRepository = productRepository;
+  public CSVDataLoader(ProductService productService) {
+    this.productService = productService;
   }
 
   @Override
   public void run(String... args) throws Exception {
-    // Avoid duplicate data
-    if (productRepository.count() > 0) {
-      System.out.println("Data exists in database. Skipping data loading");
-      return;
-    }
-
-    System.out.println("Loading product data from CSV file");
-
-    // Get CSV file from src/main/resources/
+    // Load CSV file
     ClassPathResource resource = new ClassPathResource("products.csv");
 
-    try (BufferedReader br =
-        new BufferedReader(
-            new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+    try (Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
 
-      String line;
-      boolean isFirstLine = true;
+      CsvToBean<CSVProductRow> csvToBean =
+          new CsvToBeanBuilder<CSVProductRow>(reader)
+              .withType(CSVProductRow.class)
+              .withIgnoreLeadingWhiteSpace(true)
+              // If there is an error, log it and move to next line
+              .withExceptionHandler(
+                  exception -> {
+                    System.err.println(
+                        "WARN: CSV row ignored due to formatting error on line "
+                            + exception.getLineNumber()
+                            + ". Detail: "
+                            + exception.getMessage());
+                    return null;
+                  })
+              .build();
 
-      while ((line = br.readLine()) != null) {
-        // Ignore CSV header
-        if (isFirstLine) {
-          isFirstLine = false;
-          continue;
-        }
+      // Keep only valid rows
+      List<CSVProductRow> validRows = csvToBean.parse();
 
-        // Process CSV
-        String[] data = line.split(",");
-        if (data.length == 7) {
-          String name = data[0].trim(),
-              sku = data[1].trim(),
-              description = data[2].trim(),
-              category = data[3].trim(),
-              priceString = data[4].replace("$", "").trim(),
-              stockString = data[5].trim(),
-              weightKgString = data[6].trim();
-
-          Product product =
-              new Product(
-                  name,
-                  sku,
-                  description,
-                  category,
-                  new BigDecimal(priceString),
-                  Integer.parseInt(stockString),
-                  Double.parseDouble(weightKgString));
-
-          // Store in database
-          productRepository.save(product);
-        }
+      if (validRows.isEmpty()) {
+        System.out.println("WARN: The CSV file did not contain any valid rows to process.");
+        return;
       }
-      System.out.println("Data stored in database!");
-      System.out.println("Entries in database: " + productRepository.count());
+
+      // Transform valid CSV rows to our Product DTO
+      List<ProductRequestDTO> dtoList =
+          validRows.stream()
+              .map(
+                  row ->
+                      new ProductRequestDTO(
+                          row.getName(),
+                          row.getSku(),
+                          row.getDescription(),
+                          row.getCategory(),
+                          row.getPrice(),
+                          row.getStock(),
+                          row.getWeightKg()))
+              .collect(Collectors.toList());
+
+      // Save all valid products on a batch
+      List<ProductResponseDTO> savedBatch = productService.createProductsBatch(dtoList);
+
+      System.out.println(
+          "INFO: [CSV Success] Processed "
+              + dtoList.size()
+              + " valid lines. "
+              + "Successfully saved "
+              + savedBatch.size()
+              + " products in bulk.");
+
     } catch (Exception e) {
-      System.err.println("Error while loading CSV: " + e.getMessage());
+      // If there is a critical error
+      System.err.println(
+          "ERROR: Critical and unexpected failure reading CSV file: " + e.getMessage());
     }
   }
 }

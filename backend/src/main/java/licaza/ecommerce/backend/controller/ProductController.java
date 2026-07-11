@@ -2,8 +2,7 @@ package licaza.ecommerce.backend.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import licaza.ecommerce.backend.dto.ProductRequestDTO;
-import licaza.ecommerce.backend.dto.ProductResponseDTO;
+import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +47,12 @@ public class ProductController {
       return ResponseEntity.noContent().build();
     }
     return ResponseEntity.notFound().build();
+  }
+
+  @PostMapping("/purchase")
+  public ResponseEntity<OrderResponseDTO> purchaseProduct(
+      @Valid @RequestBody PurchaseRequestDTO purchaseDTO) {
+    OrderResponseDTO response = productService.purchaseProduct(purchaseDTO);
+    return ResponseEntity.ok(response);
   }
 }
