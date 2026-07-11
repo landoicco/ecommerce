@@ -3,9 +3,10 @@ package licaza.ecommerce.backend.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,10 +15,12 @@ import lombok.Setter;
 @Table(name = "products")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class Product {
 
-  @Id @GeneratedValue private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
   private String name;
 
@@ -27,21 +30,21 @@ public class Product {
 
   private String category;
 
-  private float price;
+  private BigDecimal price;
 
   private int stock;
 
   @Column(name = "weight_kg")
-  private float weightKg;
+  private double weightKg;
 
   public Product(
       String name,
       String sku,
       String description,
       String category,
-      float price,
+      BigDecimal price,
       int stock,
-      float weightKg) {
+      double weightKg) {
     this.name = name;
     this.sku = sku;
     this.description = description;

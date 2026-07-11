@@ -2,6 +2,7 @@ package licaza.ecommerce.backend;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import licaza.ecommerce.backend.domain.Product;
 import licaza.ecommerce.backend.repo.ProductRepository;
@@ -62,9 +63,9 @@ public class CSVDataLoader implements CommandLineRunner {
                   sku,
                   description,
                   category,
-                  Float.parseFloat(priceString),
+                  new BigDecimal(priceString),
                   Integer.parseInt(stockString),
-                  Float.parseFloat(weightKgString));
+                  Double.parseDouble(weightKgString));
 
           // Store in database
           productRepository.save(product);
