@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProducts } from "./commons/useProducts";
 import type { Product } from "./commons/types";
 import ProductCard from "./components/ProductCard";
@@ -56,6 +56,14 @@ export default function App() {
     await buyProduct(product, quantity);
     setBuyingProduct(null);
   };
+
+  // Scroll up when page change
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [page]);
 
   return (
     <div className="min-h-screen bg-[#fafafa] py-12 px-4 sm:px-6 lg:px-8 text-gray-900 font-sans antialiased relative overflow-x-hidden">
