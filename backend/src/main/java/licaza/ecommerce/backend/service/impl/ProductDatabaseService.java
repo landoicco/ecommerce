@@ -253,19 +253,13 @@ public class ProductDatabaseService implements ProductService {
     Pageable pageable =
         PageRequest.of(queryDTO.page(), queryDTO.size(), Sort.by(direction, queryDTO.sortBy()));
 
-    // Parameter cleanup, avoid invalid whitespaces
-    String nameFilter =
-        (queryDTO.name() != null && !queryDTO.name().isBlank()) ? queryDTO.name() : null;
-    String categoryFilter =
-        (queryDTO.category() != null && !queryDTO.category().isBlank())
-            ? queryDTO.category()
-            : null;
-    String skuFilter =
-        (queryDTO.sku() != null && !queryDTO.sku().isBlank()) ? queryDTO.sku() : null;
+    // Clean of search term
+    String searchFilter =
+        (queryDTO.search() != null && !queryDTO.search().isBlank()) ? queryDTO.search() : null;
 
-    // Send bundle with parameters to repo
+    // Run unified search
     Page<Product> productPage =
-        productRepository.findCatalogWithFilters(nameFilter, categoryFilter, skuFilter, pageable);
+        productRepository.findCatalogWithUniversalSearch(searchFilter, pageable);
 
     return productPage.map(this::convertToResponseDTO);
   }
