@@ -9,26 +9,24 @@ export function useProducts(searchQuery: string) {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
+  // Counter to force page refresh each time data in DB changes
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const triggerRefresh = () => setRefreshKey((prev) => prev + 1);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const backendPage = page - 1; // Backend use 0 as base, UI uses 1 as base
-        const size = 10;
+        const backendPage = page - 1;
+        const size = 12;
         const queryClean = encodeURIComponent(searchQuery);
-
-        // Build URL
         const url = `${API_URL}/catalog?size=${size}&page=${backendPage}&sortBy=price&sortDir=desc&search=${queryClean}`;
 
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to fetch products");
 
         const data = await response.json();
-
-        // Support paginated and plain objects
         const items = data.content || data.items || data;
         setProducts(items);
-
-        // Control if there are more pages to show
         setHasMore(items.length === size);
       } catch (err: any) {
         setError(err.message);
@@ -36,28 +34,12 @@ export function useProducts(searchQuery: string) {
     };
 
     fetchProducts();
-  }, [page, searchQuery]); // Run when page or search query changes
+  }, [page, searchQuery, refreshKey]);
 
-  // Return to page 1 when user write on searchbar
+  // If new search is made, go back to page 1
   useEffect(() => {
     setPage(1);
   }, [searchQuery]);
-
-  // READ
-  const fetchProducts = () => {
-    fetch(API_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        return res.json();
-      })
-      .then((data: Product[]) => setProducts(data))
-      .catch((err) => setError(err instanceof Error ? err.message : "API Error"));
-  };
-
-  // Ensure we fetch items at first
-  // useEffect(() => {
-  //   fetchProducts();
-  // }, []);
 
   // CREATE
   const addProduct = async (newProduct: Omit<Product, "id">) => {
@@ -68,7 +50,7 @@ export function useProducts(searchQuery: string) {
         body: JSON.stringify(newProduct),
       });
       if (!response.ok) throw new Error("Failed to create product");
-      fetchProducts(); // Refresh local state with new data
+      triggerRefresh();
     } catch (err) {
       console.error(err);
       alert("Error saving product");
@@ -84,7 +66,7 @@ export function useProducts(searchQuery: string) {
         body: JSON.stringify(updatedFields),
       });
       if (!response.ok) throw new Error("Failed to update product");
-      fetchProducts();
+      triggerRefresh();
     } catch (err) {
       console.error(err);
       alert("Error updating product");
@@ -101,9 +83,7 @@ export function useProducts(searchQuery: string) {
       if (!response.ok) {
         throw new Error(`Failed to delete item: ${response.status}`);
       }
-
-      // Remove element from local state
-      setProducts((prevProducts) => prevProducts.filter((product) => product.id !== id));
+      triggerRefresh();
     } catch (err) {
       console.error(err);
       alert("Could not delete product from database");
@@ -143,8 +123,7 @@ export function useProducts(searchQuery: string) {
         const msg = `BACKEND SAYS:\n\n` + `• Message: ${data}\n`;
         alert(msg);
       }
-      // Fetch products to update UI
-      fetchProducts();
+      triggerRefresh();
     } catch (err) {
       console.error(err);
     }
