@@ -1,4 +1,4 @@
-package licaza.ecommerce.backend;
+package licaza.ecommerce.backend.config;
 
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -14,11 +14,11 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CSVDataLoader implements CommandLineRunner {
+public class CSVMockDataConfig implements CommandLineRunner {
 
   private final ProductService productService;
 
-  public CSVDataLoader(ProductService productService) {
+  public CSVMockDataConfig(ProductService productService) {
     this.productService = productService;
   }
 
