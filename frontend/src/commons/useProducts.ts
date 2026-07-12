@@ -3,9 +3,45 @@ import type { Product } from "./types";
 
 const API_URL = "http://localhost:8080/api/products";
 
-export function useProducts() {
+export function useProducts(searchQuery: string) {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const backendPage = page - 1; // Backend use 0 as base, UI uses 1 as base
+        const size = 10;
+        const queryClean = encodeURIComponent(searchQuery);
+
+        // Build URL
+        const url = `${API_URL}/catalog?size=${size}&page=${backendPage}&sortBy=price&sortDir=desc&search=${queryClean}`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch products");
+
+        const data = await response.json();
+
+        // Support paginated and plain objects
+        const items = data.content || data.items || data;
+        setProducts(items);
+
+        // Control if there are more pages to show
+        setHasMore(items.length === size);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+
+    fetchProducts();
+  }, [page, searchQuery]); // Run when page or search query changes
+
+  // Return to page 1 when user write on searchbar
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   // READ
   const fetchProducts = () => {
@@ -19,9 +55,9 @@ export function useProducts() {
   };
 
   // Ensure we fetch items at first
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // useEffect(() => {
+  //   fetchProducts();
+  // }, []);
 
   // CREATE
   const addProduct = async (newProduct: Omit<Product, "id">) => {
@@ -114,5 +150,15 @@ export function useProducts() {
     }
   };
 
-  return { products, error, deleteProduct, updateProduct, addProduct, buyProduct };
+  return {
+    products,
+    error,
+    page,
+    setPage,
+    hasMore,
+    deleteProduct,
+    updateProduct,
+    addProduct,
+    buyProduct,
+  };
 }
