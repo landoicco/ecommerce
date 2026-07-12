@@ -18,7 +18,11 @@ services:
         condition: service_healthy
 
   frontend:
-    build: frontend/
+    build:
+      context: ./frontend
+      args:
+        # Send backend URL as argument to Dockerfile
+        - VITE_API_BASE_URL=http://localhost:8080/api/products
     image: ecommerce-client-img
     container_name: ecommerce-frontend-cont
     ports:

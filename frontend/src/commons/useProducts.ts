@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Product } from "./types";
 
-const API_URL = "http://localhost:8080/api/products";
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function useProducts(searchQuery: string) {
   const [products, setProducts] = useState<Product[]>([]);
