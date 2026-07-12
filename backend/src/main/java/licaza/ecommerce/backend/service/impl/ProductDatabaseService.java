@@ -13,6 +13,10 @@ import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.exception.*;
 import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -238,6 +242,26 @@ public class ProductDatabaseService implements ProductService {
       // Send to GlobalExceptionHandler
       throw new CheckoutFailedException(errorMsg, failedOrderDTO);
     }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ProductResponseDTO> getCatalog(ProductQueryDTO queryDTO) {
+    Sort.Direction direction =
+        queryDTO.sortDir().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+    Pageable pageable =
+        PageRequest.of(queryDTO.page(), queryDTO.size(), Sort.by(direction, queryDTO.sortBy()));
+
+    // Clean of search term
+    String searchFilter =
+        (queryDTO.search() != null && !queryDTO.search().isBlank()) ? queryDTO.search() : null;
+
+    // Run unified search
+    Page<Product> productPage =
+        productRepository.findCatalogWithUniversalSearch(searchFilter, pageable);
+
+    return productPage.map(this::convertToResponseDTO);
   }
 
   // Utility methods (Mappers)

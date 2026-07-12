@@ -74,7 +74,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
                 setBuyQuantity(val); // Trick to test backend exceptions
               }}
               onBlur={() => {
-                // If user quit foucs, change to back to 1
+                // If user quit focus, change to back to 1
                 if (!buyQuantity || isNaN(buyQuantity)) setBuyQuantity(1);
               }}
               className="w-12 h-6 bg-white border border-gray-200 text-gray-800 text-center rounded font-semibold focus:outline-none focus:border-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

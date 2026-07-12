@@ -7,6 +7,11 @@ services:
     container_name: ecommerce-backend-cont
     ports:
       - "8080:8080"
+    environment:
+      - FRONTEND_URL=http://localhost:3000
+      - DB_URL=jdbc:mariadb://database:3306/ecommercedb
+      - DB_USER=root
+      - DB_PASSWORD=root
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
       interval: 20s
@@ -18,7 +23,11 @@ services:
         condition: service_healthy
 
   frontend:
-    build: frontend/
+    build:
+      context: ./frontend
+      args:
+        # Send backend URL as argument to Dockerfile
+        - VITE_API_BASE_URL=http://localhost:8080/api/products
     image: ecommerce-client-img
     container_name: ecommerce-frontend-cont
     ports:
