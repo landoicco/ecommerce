@@ -13,6 +13,10 @@ import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.exception.*;
 import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -238,6 +242,32 @@ public class ProductDatabaseService implements ProductService {
       // Send to GlobalExceptionHandler
       throw new CheckoutFailedException(errorMsg, failedOrderDTO);
     }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ProductResponseDTO> getCatalog(ProductQueryDTO queryDTO) {
+    Sort.Direction direction =
+        queryDTO.sortDir().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+    Pageable pageable =
+        PageRequest.of(queryDTO.page(), queryDTO.size(), Sort.by(direction, queryDTO.sortBy()));
+
+    // Parameter cleanup, avoid invalid whitespaces
+    String nameFilter =
+        (queryDTO.name() != null && !queryDTO.name().isBlank()) ? queryDTO.name() : null;
+    String categoryFilter =
+        (queryDTO.category() != null && !queryDTO.category().isBlank())
+            ? queryDTO.category()
+            : null;
+    String skuFilter =
+        (queryDTO.sku() != null && !queryDTO.sku().isBlank()) ? queryDTO.sku() : null;
+
+    // Send bundle with parameters to repo
+    Page<Product> productPage =
+        productRepository.findCatalogWithFilters(nameFilter, categoryFilter, skuFilter, pageable);
+
+    return productPage.map(this::convertToResponseDTO);
   }
 
   // Utility methods (Mappers)

@@ -3,6 +3,7 @@ package licaza.ecommerce.backend.service;
 import java.util.List;
 import java.util.Optional;
 import licaza.ecommerce.backend.dto.*;
+import org.springframework.data.domain.Page;
 
 public interface ProductService {
   List<ProductResponseDTO> getAllProducts();
@@ -16,4 +17,6 @@ public interface ProductService {
   boolean deleteProduct(Long id);
 
   OrderResponseDTO purchaseProduct(PurchaseRequestDTO purchaseDTO);
+
+  Page<ProductResponseDTO> getCatalog(ProductQueryDTO queryDTO);
 }

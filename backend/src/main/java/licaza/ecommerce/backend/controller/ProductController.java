@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.service.ProductService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,5 +55,12 @@ public class ProductController {
       @Valid @RequestBody PurchaseRequestDTO purchaseDTO) {
     OrderResponseDTO response = productService.purchaseProduct(purchaseDTO);
     return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/catalog")
+  public ResponseEntity<Page<ProductResponseDTO>> getCatalog(
+      @ModelAttribute ProductQueryDTO queryDTO) {
+    Page<ProductResponseDTO> catalog = productService.getCatalog(queryDTO);
+    return ResponseEntity.ok(catalog);
   }
 }
