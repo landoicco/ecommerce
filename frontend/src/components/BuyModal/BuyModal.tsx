@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Product } from "../commons/types";
+import type { Product } from "@/commons/types";
 
 interface BuyModalProps {
   product: Product | null;

@@ -8,12 +8,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - FRONTEND_URL=http://localhost:3000
-      - DB_URL=jdbc:mariadb://database:3306/ecommercedb
-      - DB_USER=root
-      - DB_PASSWORD=root
+      - FRONTEND_URL=${FRONTEND_URL}
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
+      test: ["CMD-SHELL", "${BACKEND_HEALTHCHECK_CMD}"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -27,7 +27,7 @@ services:
       context: ./frontend
       args:
         # Send backend URL as argument to Dockerfile
-        - VITE_API_BASE_URL=http://localhost:8080/api/products
+        - VITE_API_BASE_URL=${BACKEND_PRODUCTS_URL}
     image: ecommerce-client-img
     container_name: ecommerce-frontend-cont
     ports:
@@ -42,10 +42,10 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: "/usr/bin/mariadb --user=root --password=root --execute \"SHOW DATABASES;\""
+      test: ${DB_HEALTHCHECK_CMD}
       interval: 2s
       timeout: 20s
       retries: 10
     environment:
-      - MARIADB_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=ecommercedb
+      - MARIADB_ROOT_PASSWORD=${DB_USER}
+      - MYSQL_DATABASE=${DB_NAME}

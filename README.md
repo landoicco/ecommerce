@@ -2,8 +2,6 @@
 
 This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing a containerized MariaDB database for robust and persistent data storage.
 
-The core philosophy of this project is to remain as simple and effective as possible, strictly adhering to the **YAGNI** (You Aren't Gonna Need It) design principle.
-
 ## Tech Stack
 
 * **Frontend:** React, Vite & Tailwind CSS
@@ -11,17 +9,17 @@ The core philosophy of this project is to remain as simple and effective as poss
 * **Database:** MariaDB 11.0
 * **Containers:** Docker (v24.0.7+) & Docker Compose (v2.21.0+)
 
-## Features
+## Key Improvements in v2.0
 
-This project supports the essential core operations required in a production-level e-commerce application:
+* **Architectural Refactor:** Introduced a dedicated Service Layer and implemented the DTO pattern.
+* **Database Migrations:** Integrated **Flyway** for version-controlled database schema management.
+* **High-Performance Data Ingestion:** Implemented batch-processing for CSV files using **OpenCSV**.
+* **Robust Error Handling:** Added centralized exception handling with custom domain exceptions.
+* **Transactional Checkout:** Finalized the full, end-to-end checkout and transaction workflow.
+* **API Enhancements:** Added pagination to listings and created a dedicated API for purchase simulation.
+* **DevOps & Testing:** Improved environment variable management and achieved broader coverage with new Unit and Integration tests.
+* **Concurrency & Race Condition Safeguards:** Implemented a robust locking mechanism to prevent race conditions during peak checkout traffic, guaranteeing data integrity and safeguarding against negative inventory levels.
 
-* **Full CRUD Operations**: Complete data management seamlessly integrated across both the frontend and backend.
-  * **Create**: A button in the top-right corner of the UI allows you to add a new product. Filling out the form saves the object to the database and dynamically updates the interface.
-  * **Read**: Products are fetched directly from the backend database and rendered dynamically as cards on the UI.
-  * **Update**: Hovering over any product card reveals an edit option. The UI adapts into an editable state, pushing changes to the database and updating the interface instantly.
-  * **Delete**: Hovering over a product card also exposes a delete action, which permanently removes the item from both the database and the UI.
-* **Search Functionality**: A search bar in the top-right corner filters products dynamically by name, SKU, or category.
-* **Purchase Simulation**: Each product card features a buy button. Clicking it reduces the item's database stock by one unit. Once an item's stock reaches zero, the purchase option becomes automatically disabled.
 
 ## Getting Started
 
@@ -36,13 +34,15 @@ Before launching the project, ensure you have the following dependencies install
 This project is fully containerized. You can build the images and spin up the entire ecosystem with a single command:
 
 ```shell
-docker compose up
+docker compose up --build --force-recreate
 ```
+**Tip:** Use the `--build --force-recreate` flags if you have previously run this project. This forces Docker to discard cached layers and recreate the containers from scratch, ensuring you are running the newest code.
 
 The `docker-compose.yml` file is configured to manage service dependencies automatically, ensuring the environment initializes in the correct sequence:
 ```
 DATABASE => BACKEND => FRONTEND
 ```
+
 ### Accessing the Application
 
 Once the initialization is complete (you can verify the container status by running `docker ps`, which should show three active containers at this point), open your web browser and navigate to the local environment:
@@ -56,38 +56,10 @@ To stop the application and clean up all associated containers, networks, and an
 ```shell
 docker compose down -v
 ```
-## Additional Information
-To interact directly with the backend API, you can utilize the following endpoints:
-To `GET` all products:
 
-```
-http://localhost:8080/api/products
-```
-To `DELETE`:
-```
-http://localhost:8080/api/products/delete/{id}
-```
-To `PUT` (modify entry):
-```
-http://localhost:8080/api/products/edit/{id}
-```
-To `POST`:
-```
-http://localhost:8080/api/products
-```
-
-## Design Choices
-
-### Data Seeding and Initialization
-The application initializes its state using dataset records parsed from a local CSV file. To streamline this process, we utilize Spring's `CommandLineRunner` interface to automatically parse and load the data into the MariaDB database at application startup. This architecture guarantees that a complete dataset is fully available to the user the moment the frontend interface loads.
-
-**Note:** The CSV mockup dataset was retrieved on July 7, 2026. The source file utilized for data seeding is located within the `backend/src/main/resources` directory.
-
-### Monolithic Single-Page UI
-To strictly adhere to the **YAGNI** (You Aren't Gonna Need It) design principle, the entire frontend is structured around a single-page dashboard. Features are implemented exclusively to satisfy core system requirements without introducing speculative complexity or redundant routing frameworks. This architectural choice prioritizes a high-utility, zero-overhead solution that remains highly maintainable.
-
-### Why MariaDB?
-During early development, we utilized an in-memory H2 database to accelerate prototyping. Once all core features were stabilized, we migrated to a production-grade database to demonstrate the application's readiness for real-world operations. 
-
-Leveraging Spring Boot’s repository pattern made this transition seamless; it only required updating the dependencies in the `pom.xml` file and adjusting the `application.properties` configuration. Furthermore, thanks to Docker Compose, integrating MariaDB as a dedicated service was straightforward, keeping the infrastructure clean and maintainable.
+**Looking for more details?** 
+Please check out our [Repository Wiki](https://github.com/landoicco/ecommerce/wiki) for in-depth information about:
+* **Architecture & Design Choices:** Explanations behind the technical decisions.
+* **API Documentation:** Comprehensive list of endpoints and usage examples.
+* **Project Structure:** How the codebase is organized.
 

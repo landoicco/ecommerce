@@ -1,4 +1,4 @@
-import type { Product } from "../commons/types";
+import type { Product } from "@/commons/types";
 
 interface ProductCardProps {
   product: Product;

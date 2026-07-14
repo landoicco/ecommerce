@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useProducts } from "./commons/useProducts";
+import { useProducts } from "./commons/useProducts/useProducts";
 import type { Product } from "./commons/types";
-import ProductCard from "./components/ProductCard";
+import ProductCard from "./components/ProductCard/ProductCard";
 import Header from "./components/Header";
 import ProductFormDrawer from "./components/ProductFormDrawer";
-import BuyModal from "./components/BuyModal";
+import BuyModal from "./components/BuyModal/BuyModal";
 
 const EMPTY_FORM: Omit<Product, "id"> = {
   name: "",
