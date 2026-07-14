@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Product } from "./types";
+import type { Product } from "@/commons/types";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
