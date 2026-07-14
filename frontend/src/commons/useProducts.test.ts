@@ -61,4 +61,24 @@ describe("useProducts Hook", () => {
       );
     });
   });
+
+  it("should handle server errors gracefully and populate the error state", async () => {
+    // Simulate backend responds with 500 error
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+
+    const { result } = renderHook(() => useProducts(""));
+
+    // Wait for hook to process error
+    await waitFor(() => {
+      // Validate there is a fail message
+      expect(result.current.error).toBe("Failed to fetch products");
+    });
+
+    // Verify product list is empty
+    expect(result.current.products).toHaveLength(0);
+  });
 });
