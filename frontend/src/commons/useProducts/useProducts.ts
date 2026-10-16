@@ -3,6 +3,12 @@ import type { Product } from "@/commons/types";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+interface PurchaseResponse {
+  status: string;
+  totalAmount: number;
+  message: string;
+}
+
 export function useProducts(searchQuery: string) {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -28,18 +34,21 @@ export function useProducts(searchQuery: string) {
         const items = data.content || data.items || data;
         setProducts(items);
         setHasMore(items.length === size);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
       }
     };
 
     fetchProducts();
   }, [page, searchQuery, refreshKey]);
 
-  // If new search is made, go back to page 1
-  useEffect(() => {
+  // If new search is made, go back to page 1. Done during render instead of in
+  // an effect, so React re-renders once instead of rendering the stale page first
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
     setPage(1);
-  }, [searchQuery]);
+  }
 
   // CREATE
   const addProduct = async (newProduct: Omit<Product, "id">) => {
@@ -107,10 +116,9 @@ export function useProducts(searchQuery: string) {
 
       // Process response, if is a JSON or plain text
       const rawText = await response.text();
-      let data: any;
       try {
         // Try to parse as JSON
-        data = JSON.parse(rawText);
+        const data: PurchaseResponse = JSON.parse(rawText);
         const msg =
           `YOUR PURCHASE STATUS:\n\n` +
           `• Status: ${data.status}\n` +
@@ -119,8 +127,7 @@ export function useProducts(searchQuery: string) {
         alert(msg);
       } catch {
         // If parse fail, then is plain text
-        data = rawText;
-        const msg = `BACKEND SAYS:\n\n` + `• Message: ${data}\n`;
+        const msg = `BACKEND SAYS:\n\n` + `• Message: ${rawText}\n`;
         alert(msg);
       }
       triggerRefresh();
