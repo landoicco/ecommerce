@@ -1,0 +1,58 @@
+# CLAUDE.md
+
+## Project
+
+Portfolio project. Currently a simple e-commerce CRUD (Spring Boot + React + MariaDB), being reworked into **MiFondita** (working name): a multi-tenant marketplace where *fondas* publish a daily menu and diners reserve food for pickup. It will be deployed to AWS with Terraform.
+
+Read these before planning any feature or infrastructure work:
+
+- `docs/product-spec.md`: product scope, domain rules, order flow.
+- `docs/infra-plan.md`: AWS architecture, cost guardrails, work phases.
+
+The goal is learning: every technical choice should be one the maintainer can defend in an interview. Explain trade-offs and prefer well-known, production-grade patterns over clever shortcuts.
+
+## Layout
+
+- `backend/`: Spring Boot 4 (Java 17 target, built with JDK 21), Maven, Flyway, JPA. Package root `licaza.ecommerce.backend`.
+- `frontend/`: React 19, TypeScript, Vite, Tailwind, Vitest.
+- `docker-compose.yml` + `.env`: local full stack (database, backend, frontend).
+- `docs/`: specs, plans, and (later) ADRs in `docs/adr/`.
+
+## Environment
+
+The toolchain is defined in `flake.nix` and entered with `nix develop`.
+
+- When the project needs a tool (a language, a CLI, a database client), add it to the `tools` list in `flake.nix` instead of installing it globally, and say which one you added.
+- Prefer packages from `nixpkgs`. Look a name up with `nix search nixpkgs <name>` before adding it.
+- After changing `flake.nix`, the shell must be re-entered (`exit`, then `nix develop`) for the tool to appear; tell the user when that is needed.
+- `flake.lock` pins the versions: commit it together with `flake.nix`.
+
+## Commands
+
+Backend (from `backend/`):
+
+- `mvn verify`: build and run all tests. `spotless:check` runs in the `compile` phase, so unformatted code fails the build.
+- `mvn spotless:apply`: format Java (google-java-format) and `pom.xml`.
+- `mvn test -Dtest=ClassName`: run a single test class.
+
+Frontend (from `frontend/`, run `npm ci` first):
+
+- `npm run lint`, `npm run build`, `npm test -- --run`.
+- `npm run format`: Prettier.
+
+Full stack: `docker compose up --build`, app at `http://localhost:3000`.
+
+A PostToolUse hook (`.claude/hooks/format.sh`) formats every file Claude edits with Spotless or Prettier. It needs the Nix shell and `frontend/node_modules`.
+
+## Conventions
+
+- **Language:** the maintainer chats in Spanish, but everything committed (code, comments, docs, commit messages, PR descriptions) is in English.
+- **Flyway:** never edit an applied migration; add a new `V{n}__description.sql`.
+- **Backend layering:** controller → service interface → implementation → repository, with DTOs at the API boundary. Keep that structure.
+- **Comments:** explain *why*, not *what*; match the density of the surrounding code.
+
+## Working rules
+
+- **Never run `git`, `gh`, `aws` or `terraform` commands**, read-only ones included. Suggest the exact command and let the maintainer run it, or ask explicitly before running one. Commits are always made by the maintainer. `.claude/settings.json` enforces this with `ask`/`deny` rules.
+- **This repository is public.** Never commit secrets, credentials, AWS account IDs, personal data, or real phone numbers. Use placeholders and `.env.example`-style files.
+- **Cost guardrails are non-negotiable.** Any infrastructure change must keep the demo within the limits in `docs/infra-plan.md`. Flag anything that could create recurring AWS charges before writing it.
