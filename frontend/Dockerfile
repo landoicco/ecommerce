@@ -1,5 +1,5 @@
 # Stage 1: Build the production assets
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Get arg from docker-compose
@@ -8,7 +8,8 @@ ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 COPY package*.json ./
-RUN npm install
+# npm ci installs exactly what package-lock.json pins, so builds are reproducible
+RUN npm ci
 COPY . .
 RUN npm run build
 
