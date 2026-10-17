@@ -12,6 +12,7 @@ services:
       - DB_URL=${DB_URL}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_PROFILES_ACTIVE=local
     healthcheck:
       test: ["CMD-SHELL", "${BACKEND_HEALTHCHECK_CMD}"]
       interval: 20s
