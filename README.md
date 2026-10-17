@@ -45,7 +45,7 @@ The codebase is in English; the first deployment serves Mexican users in Spanish
 - The default language is set per deployment with `VITE_DEFAULT_LOCALE` (`en` when unset); users can switch, and the choice is remembered.
 - The API will return stable error codes instead of sentences, so the client translates them (with the new orders API).
 
-Details in the [product spec](docs/product-spec.md#internationalization).
+How it works and how to extend it: [i18n guide](docs/i18n.md).
 
 ## Architecture
 
@@ -168,6 +168,7 @@ Every pull request updates the documentation it affects, so `main` and its docs 
 |---|---|
 | [Product spec](docs/product-spec.md) | Scope, domain rules, order flow, internationalization |
 | [Infra plan](docs/infra-plan.md) | AWS architecture, cost rules, work phases |
+| [i18n guide](docs/i18n.md) | How translations are wired in, safety nets, adding a text or a language |
 | [ADRs](docs/adr/) | Architecture decisions and their trade-offs |
 
 ## Layout
