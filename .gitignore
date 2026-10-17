@@ -3,3 +3,6 @@
 
 # Local environment; .env.example is the committed template
 .env
+
+# GitHub PR Descriptions
+pr-body.md
