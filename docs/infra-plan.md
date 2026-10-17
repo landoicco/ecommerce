@@ -112,7 +112,7 @@ Infra-related app changes only; the product rework is tracked in [product-spec.m
 
 - [x] Migrate from MariaDB to PostgreSQL (driver, Flyway migrations, compose)
 - [ ] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
-- [ ] Add `.env.example` and remove `.env` from the repo
+- [x] Add `.env.example` and remove `.env` from the repo
 - [ ] Replace `System.out.println` with SLF4J and align on Java 21
 - [ ] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
 - [ ] Frontend: relative API path `/api`, read `config.json` (`mode: demo|prod`)

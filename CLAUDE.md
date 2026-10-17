@@ -15,7 +15,7 @@ The goal is learning: every technical choice should be one the maintainer can de
 
 - `backend/`: Spring Boot 4 (Java 17 target, built with JDK 21), Maven, Flyway, JPA. Package root `licaza.ecommerce.backend`.
 - `frontend/`: React 19, TypeScript, Vite, Tailwind, Vitest.
-- `docker-compose.yml` + `.env`: local full stack (database, backend, frontend).
+- `docker-compose.yml` + `.env` (git-ignored, copied from `.env.example`): local full stack (database, backend, frontend).
 - `docs/`: specs, plans, and (later) ADRs in `docs/adr/`.
 
 ## Environment

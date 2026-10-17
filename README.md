@@ -31,9 +31,10 @@ Before launching the project, ensure you have the following dependencies install
 
 ### Deployment
 
-This project is fully containerized. You can build the images and spin up the entire ecosystem with a single command:
+This project is fully containerized. Create your local environment file from the template, then build the images and spin up the entire ecosystem:
 
 ```shell
+cp .env.example .env
 docker compose up --build --force-recreate
 ```
 **Tip:** Use the `--build --force-recreate` flags if you have previously run this project. This forces Docker to discard cached layers and recreate the containers from scratch, ensuring you are running the newest code.
