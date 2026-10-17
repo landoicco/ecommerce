@@ -1,12 +1,12 @@
 # Simple E-Commerce CRUD Application
 
-This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing a containerized MariaDB database for robust and persistent data storage.
+This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing a containerized PostgreSQL database for robust and persistent data storage.
 
 ## Tech Stack
 
 * **Frontend:** React, Vite & Tailwind CSS
 * **Backend:** Java, Maven & Spring Boot
-* **Database:** MariaDB 11.0
+* **Database:** PostgreSQL 18
 * **Containers:** Docker (v24.0.7+) & Docker Compose (v2.21.0+)
 
 ## Key Improvements in v2.0
