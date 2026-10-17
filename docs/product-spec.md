@@ -120,7 +120,7 @@ Code, API, logs and docs are in English; deployments serve their users in their 
 - **API errors:** stable codes (e.g. `ITEM_SOLD_OUT`) plus parameters, never sentences; the client translates them.
 - **Server-generated text** (WhatsApp messages): Spring `MessageSource` bundles, rendered in the customer's locale.
 - **Formatting:** numbers, prices and dates go through locale-aware formatters (`Intl` in the browser), never string concatenation.
-- **Locale selection:** each deployment sets a default locale, like the vertical; users can switch, and the choice is remembered.
+- **Locale selection:** each deployment sets a default locale, like the vertical; the browser language is ignored, because customers expect the marketplace's language. Users can switch, and the choice is remembered.
 - **Business content** (menu items, descriptions) is stored as the business writes it, not machine-translated.
 
 ## Mexico-specific defaults
