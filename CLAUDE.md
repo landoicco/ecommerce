@@ -7,7 +7,7 @@ Portfolio project. Currently a simple e-commerce CRUD (Spring Boot + React + Mar
 Read these before planning any feature or infrastructure work:
 
 - `docs/product-spec.md`: product scope, domain rules, order flow.
-- `docs/infra-plan.md`: AWS architecture, cost guardrails, work phases.
+- `docs/infra-plan.md`: AWS architecture, cost rules, work phases.
 
 The goal is learning: every technical choice should be one the maintainer can defend in an interview. Explain trade-offs and prefer well-known, production-grade patterns over clever shortcuts.
 
@@ -16,7 +16,7 @@ The goal is learning: every technical choice should be one the maintainer can de
 - `backend/`: Spring Boot 4 (Java 21), Maven, Flyway, JPA. Package root `licaza.ecommerce.backend`.
 - `frontend/`: React 19, TypeScript, Vite, Tailwind, Vitest.
 - `docker-compose.yml` + `.env` (git-ignored, copied from `.env.example`): local full stack (database, backend, frontend).
-- `docs/`: specs, plans, and (later) ADRs in `docs/adr/`.
+- `docs/`: specs, plans, and ADRs in `docs/adr/`.
 
 ## Environment
 
@@ -50,11 +50,11 @@ A PostToolUse hook (`.claude/hooks/format.sh`) formats every file Claude edits w
 - **Flyway:** never edit an applied migration; add a new `V{n}__description.sql`.
 - **Backend layering:** controller → service interface → implementation → repository, with DTOs at the API boundary. Keep that structure.
 - **Comments:** explain *why*, not *what*; match the density of the surrounding code.
-- **Configuration per environment:** Spring profiles `local` (docker compose) and `aws` (demo and prod), activated with `SPRING_PROFILES_ACTIVE`. The same image runs everywhere, so don't use Maven profiles for environment differences.
+- **Configuration per environment:** Spring profiles `local` (docker compose) and `aws` (prod), activated with `SPRING_PROFILES_ACTIVE`. The same image runs everywhere, so don't use Maven profiles for environment differences.
 - **Logging:** SLF4J with `{}` placeholders, never `System.out`. Business events start with an emoji: 📦 data import, ⏭️ skipped record, ✅ success, 📉 out of stock, 💳 payment, 🔒 concurrency conflict, ❌ failure. Locally logs are colored text; the `aws` profile emits ECS JSON for CloudWatch.
 
 ## Working rules
 
 - **Never run `git`, `gh`, `aws` or `terraform` commands**, read-only ones included. Suggest the exact command and let the maintainer run it, or ask explicitly before running one. Commits are always made by the maintainer. `.claude/settings.json` enforces this with `ask`/`deny` rules.
 - **This repository is public.** Never commit secrets, credentials, AWS account IDs, personal data, or real phone numbers. Use placeholders and `.env.example`-style files.
-- **Cost guardrails are non-negotiable.** Any infrastructure change must keep the demo within the limits in `docs/infra-plan.md`. Flag anything that could create recurring AWS charges before writing it.
+- **Cost rules are non-negotiable.** Any infrastructure change must follow the cost rules in `docs/infra-plan.md` (the target customers are small businesses). Flag anything that could create recurring AWS charges before writing it.

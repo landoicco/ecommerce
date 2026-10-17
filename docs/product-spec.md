@@ -8,11 +8,11 @@ An e-commerce platform for small Mexican businesses whose menu changes over time
 
 It works like a regular e-commerce. What makes it different is that menus are **dynamic**: they are valid for a specific service window and have limited stock.
 
-**One deploy is one marketplace for one vertical** (fondas, neverías, pulquerías…), with many businesses inside. The vertical is configuration (branding, texts, categories, seed data), not code. The demo deploy targets fondas.
+**One deploy is one marketplace for one vertical** (fondas, neverías, pulquerías…), with many businesses inside. The vertical is configuration (branding, texts, categories, seed data), not code. The first vertical is fondas.
 
 The project has three goals:
 
-1. **Infrastructure:** clean, robust and very cheap (demo capped at ~$1/month), with an optional production-grade setup. See [infra-plan.md](infra-plan.md).
+1. **Infrastructure:** clean, robust and as cheap as possible, so modest businesses can afford it. Ready to deploy, not kept running. See [infra-plan.md](infra-plan.md).
 2. **Engineering showcase:** production-quality Java, Spring Boot and React.
 3. **A real use case:** built around how these businesses actually operate in Mexico (changing menus, limited stock, cash or bank transfer, WhatsApp).
 
@@ -100,8 +100,8 @@ Any active state ─► EXPIRED / CANCELLED   (stock returns to the menu)
 - **Use cases:**
   - OTP codes.
   - Order status updates.
-- **Cost:** WhatsApp charges per message, so sends are capped by guardrails.
-- **Demo:** OTP codes are shown on screen, because Meta's free test number only reaches pre-verified numbers.
+- **Cost:** WhatsApp charges per message, so sends are capped (see the OTP rules above).
+- **Local profile:** OTP codes are logged instead of sent, so the app can be tried without a WhatsApp Business account.
 
 ## Mexico-specific defaults
 
@@ -109,10 +109,9 @@ Any active state ─► EXPIRED / CANCELLED   (stock returns to the menu)
 - Time zone: `America/Mexico_City`. Schedules are stored as local times plus a zone ID, never as fixed offsets.
 - Spanish UI.
 
-## Demo constraints
+## Sample data
 
-- Data is ephemeral and resets on every session. The demo is seeded with sample businesses and menus.
-- Registrations made during a session are lost when the instance shuts down.
+`docker compose up` seeds sample businesses and menus, so the whole flow can be tried locally.
 
 ## Later
 
@@ -135,4 +134,3 @@ Planned once the core flow, security and infrastructure are solid:
 ## Open questions
 
 - Production domain.
-- Access codes for recruiters (see infra plan).

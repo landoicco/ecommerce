@@ -2,89 +2,90 @@
 
 ## Goal
 
-Deploy the project to AWS with Terraform, in two environments:
+Make the application deployable to AWS with Terraform in a single environment, `prod`, built to be as cheap as possible. The target customers are small businesses, so the platform has to run at a cost that a marketplace of modest *fondas* can carry.
 
-- **demo**: public portfolio demo at `fondas.licaza.dev` (tentative), capped at **~$1 USD/month**.
-- **prod**: infrastructure for real, sustained use. Validated with `plan` and Infracost; only applied ephemerally.
+The infrastructure is **deploy-ready but kept off**: it is validated on every PR (plan, policy checks, cost estimate) and applied only ephemerally to capture evidence, then destroyed. The design is recorded in [ADR 0002](adr/0002-low-cost-production-architecture.md).
 
-The same application image runs in both environments; only infrastructure and configuration change. Product scope lives in [product-spec.md](product-spec.md).
+The same application image runs locally and in AWS; only configuration changes. Product scope lives in [product-spec.md](product-spec.md).
 
 Assumptions: the account has no credits or 12-month free tier (only *always-free*), the region is `us-east-1`, and the `licaza.dev` hosted zone already exists in Route 53.
 
-## Demo architecture
+## Architecture
 
 ```
-fondas.licaza.dev (alias record in the existing hosted zone, ACM certificate)
+app domain (alias record, ACM certificate)
         │
-   CloudFront ── /*        → S3: landing page explaining the app + "Start demo" button
-              ── /wake     → Lambda: Turnstile → access code or quota (DynamoDB) → EC2 spot
-              ── /status   → Lambda: boot stages + remaining quota
-              ── /api/*    → CloudFront Function + KeyValueStore → EC2 (dynamic origin)
+   CloudFront ── /*      → S3: frontend build (OAC)
+              ── /api/*  → EC2 backend (origin restricted to CloudFront)
+
+   VPC (2 AZs, no NAT)
+   ├── public subnets:  EC2 Auto Scaling group (min = max = 1, spot)
+   └── private subnets: RDS PostgreSQL (single-AZ)
+
+   Backend ─► SQS ─► Lambda ─► WhatsApp Cloud API   (notifications, with DLQ)
 ```
 
-- **Ephemeral `t4g.small` spot instance:** it is terminated, not stopped, so no EBS volume is left accruing charges. Falls back to on-demand when spot capacity is unavailable.
-- **docker compose on the instance:** Spring Boot + PostgreSQL (PostGIS image). The database resets every session and is seeded with sample fondas and menus.
-- **Images on GHCR** (public, multi-arch) and the public ECS-optimized AL2023 arm64 AMI.
-- **Minimal VPC:** public subnets only, no NAT. The security group only allows the CloudFront prefix list. Instance access via SSM Session Manager, no SSH.
-- **Configuration in SSM Parameter Store**, not Secrets Manager.
+- **Backend:** an Auto Scaling group of one instance using a mixed instances policy with spot capacity (`price-capacity-optimized` across several Graviton types) and capacity rebalancing. The ASG replaces the instance when it is reclaimed or fails. A variable switches to on-demand. The instance runs the backend image with Docker; the database never runs on it.
+- **Database:** RDS PostgreSQL (PostGIS as an extension), smallest Graviton class, single-AZ, automated backups. The master password is managed by RDS in Secrets Manager.
+- **Frontend:** static build in S3, served by CloudFront. Same origin for the app and `/api`, so no CORS in AWS.
+- **Notifications:** the backend publishes to SQS; a Lambda outside the VPC sends the WhatsApp messages. Reservations stay synchronous, because they must check stock before confirming.
+- **Images:** ECR with a lifecycle policy that keeps the last few tags.
+- **Deploys:** the image tag lives in SSM Parameter Store; a deploy updates it and starts an ASG instance refresh. With a single instance this means a few minutes of downtime, accepted and documented.
+- **Configuration:** SSM Parameter Store (SecureString for secrets other than the database password).
+- **Access:** SSM Session Manager, no SSH.
+- **Observability:** CloudWatch Logs with short retention, alarms (instance health, RDS storage and CPU, DLQ depth, CloudFront 5xx) and one dashboard.
 
-## Cost guardrails (demo)
+## Cost rules
 
-| # | Guardrail | Value |
-|---|---|---|
-| 1 | Start only from the button, validated with Cloudflare Turnstile | No automatic start |
-| 2 | Function URLs reachable only through CloudFront (OAC + IAM) | — |
-| 3 | Concurrent instances | Max 1; the `/wake` Lambda has reserved concurrency of 1 |
-| 4 | Pessimistic quota reservation with a conditional write in DynamoDB | 30 min per reservation |
-| 5 | Session limit | 60 min |
-| 6 | Idle shutdown | 15 min without requests |
-| 7 | Daily quota | 3 h |
-| 8 | Monthly quota | 60 h (~$0.66) |
-| 9 | Instance TTL: `shutdown` with `terminate` behavior | 70 min |
-| 10 | Nightly Lambda that terminates instances tagged `demo` | Daily |
-| 11 | AWS Budgets → SNS → kill switch Lambda (`demo_enabled=false` + terminate instance) | Alerts at $0.50 and $1 |
-| 12 | CloudFront: free flat-rate plan if compatible; otherwise rate limiting in Spring with Bucket4j | — |
-| 13 | CloudWatch Logs with short retention | 7 days |
-| 14 | No paid WhatsApp messages in demo (OTP shown on screen, Meta test number only) | $0 |
+| Rule | Why |
+|---|---|
+| No NAT gateway | ~$33/month on its own. The EC2 instance sits in a public subnet with a security group that only allows the CloudFront prefix list; RDS needs no internet access |
+| No load balancer | ~$17/month. CloudFront terminates TLS and reaches the instance directly |
+| No Multi-AZ by default | Doubles the database cost. The ASG and RDS backups cover the failures a small marketplace can tolerate |
+| No interface VPC endpoints | ~$7/month each |
+| Spot for compute | About a third of the on-demand price |
+| Short log retention | 14 days |
+| AWS Budgets with alerts | Catches anything left running after an ephemeral apply |
 
-When the quota runs out, the frontend shows a video or GIF of the demo and a link to the portfolio.
+### Estimated monthly cost if left running
 
-## Prod (summary)
+Approximate on-demand prices in `us-east-1`, before Infracost validates them:
 
-- **Frontend:** CloudFront + WAF + S3.
-- **Backend:** ALB → ECS Fargate (ARM) across 2 AZs with autoscaling, and images on ECR.
-- **Data and secrets:** RDS PostgreSQL (PostGIS) Multi-AZ, with the password in Secrets Manager.
-- **Scheduled jobs:** daily menu notifications and order state updates (EventBridge Scheduler or Spring `@Scheduled` + ShedLock).
-- **Notifications:** WhatsApp Cloud API with daily send caps; credentials in Secrets Manager.
-- **Network:** NAT configurable through `nat_mode`.
-- **Domain:** `domain_name` variable (e.g. `mifondita.com`).
-- **Cost:** estimated at ~$110–150/month; published by Infracost on every PR.
+| Item | USD/month |
+|---|---|
+| EC2 `t4g.small` spot + EBS | ~6 |
+| Public IPv4 address | ~4 |
+| RDS `db.t4g.micro` single-AZ + 20 GB | ~14 |
+| Secrets Manager (database password) | ~0.40 |
+| S3, CloudFront, ECR, SQS, Lambda | ~1 |
+| CloudWatch | ~1–3 |
+| **Total** | **~25** |
+
+WhatsApp messages are billed by Meta per conversation and are capped by the limits in the product spec.
 
 ## Terraform layout
 
 ```
 infra/
-├── bootstrap/            # state bucket, GitHub OIDC, CI roles, Budgets
+├── bootstrap/          # state bucket, GitHub OIDC, CI roles, Budgets
 ├── modules/
-│   ├── network/          # VPC; private_subnets and nat_mode are configurable
-│   ├── frontend/         # S3 + CloudFront + OAC + ACM; takes the API behaviors as input
-│   ├── backend-ondemand/ # launch template, Lambdas, DynamoDB, KVS, CF Function, guardrails
-│   ├── backend-ecs/      # ECR, ECS, ALB, autoscaling
-│   ├── database/         # RDS
-│   └── observability/    # alarms, dashboard
+│   ├── network/        # VPC, public and private subnets, no NAT
+│   ├── frontend/       # S3 + CloudFront + OAC + ACM
+│   ├── backend/        # ECR, launch template, ASG, IAM, security group
+│   ├── database/       # RDS
+│   ├── notifications/  # SQS, DLQ, Lambda
+│   └── observability/  # alarms, dashboard
 ├── envs/
-│   ├── demo/
 │   └── prod/
-└── lambdas/              # Python: wake, status, sweeper, killswitch
+└── lambdas/            # notification sender
 ```
 
-- One directory per environment, each with its own state.
 - State in S3 with `use_lockfile`.
 - `default_tags` on the provider: `Project`, `Env`, `ManagedBy`.
 
 ## Repository safeguards
 
-Every change reaches `main` through a PR that passed CI. This is in place before the infrastructure work, because Phase 4 will apply Terraform on merges to `main`.
+Every change reaches `main` through a PR that passed CI.
 
 **CI** (`.github/workflows/ci.yml`), on PRs to `main` and on pushes to `main`:
 
@@ -107,69 +108,49 @@ The workflow has read-only permissions, actions are pinned to a commit SHA, and 
 
 ## Work phases
 
-### Phase 0: Prepare the app
-Infra-related app changes only; the product rework is tracked in [product-spec.md](product-spec.md).
+The product rework ([product-spec.md](product-spec.md)) runs after Phase 0 and before Phase 4, so the deployment evidence comes from the real domain.
 
+### Phase 0: Prepare the app
 - [x] Migrate from MariaDB to PostgreSQL (driver, Flyway migrations, compose)
 - [x] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
 - [x] Add `.env.example` and remove `.env` from the repo
 - [x] Replace `System.out.println` with SLF4J and align on Java 21
 - [x] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
 - [x] Frontend: relative API path `/api`
-- [ ] Landing page with backend state: asleep, waking up, ready, or out of quota; read `config.json` (`mode: demo|prod`) at runtime
-- [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy and the GHCR image paths contain the repository name.
+- [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy contains the repository name.
 
-**Done when:** `docker compose up` works as before, the frontend no longer depends on `VITE_API_BASE_URL`, and the project is named `itacatl`.
+**Done when:** `docker compose up` works as before and the project is named `itacatl`.
 
 ### Phase 1: Bootstrap
 - [ ] Add to `flake.nix`: `terraform`, `awscli2`, `tflint`, `trivy`, `terraform-docs`, `infracost`
-- [ ] `bootstrap/`: state bucket, OIDC, plan/apply roles, Budgets and SNS
+- [ ] `bootstrap/`: state bucket, OIDC, plan and apply roles, Budgets and SNS
 - [ ] Migrate the bootstrap state to S3
 
 **Done when:** remote state exists and Budgets alerts arrive.
 
-### Phase 2: Network and frontend
-- [ ] `network` module (demo mode)
-- [ ] `frontend` module with ACM and an alias record in `licaza.dev`
-- [ ] Publish the build to S3
+### Phase 2: Modules
+- [ ] `network`, `database`, `backend`, `frontend`, `notifications` and `observability` modules
+- [ ] `envs/prod` wiring them together
 
-**Done when:** `https://fondas.licaza.dev` serves the landing page.
+**Done when:** `terraform plan` for `envs/prod` is clean and Infracost stays within the estimate above.
 
-### Phase 3: On-demand backend
-- [ ] CI publishing multi-arch images to GHCR
-- [ ] Launch template, user-data, IAM role and security group
-- [ ] Spike: validate `cf.updateRequestOrigin` + KeyValueStore (fallback: dynamic hostname)
-- [ ] `wake` and `status` Lambdas, DynamoDB quota table, Turnstile
-- [ ] Idle shutdown, TTL, nightly Lambda and kill switch
-- [ ] Test every guardrail: force the quota, TTL, idle shutdown and kill switch
-
-**Done when:** the demo starts from the button, shuts itself down, and every guardrail has been verified.
-
-### Phase 4: CI/CD
+### Phase 3: CI/CD
 - [ ] `fmt`, `validate`, `tflint`, `trivy` and `terraform test` on PRs
-- [ ] `plan` on PRs, `apply` on `main`, manual approval for prod
-- [ ] Infracost on PRs
+- [ ] `plan` and Infracost comment on PRs
+- [ ] Manual `apply` and `destroy` workflows with environment approval; `apply` builds and pushes the image to ECR
 
-### Phase 5: Prod
-- [ ] `backend-ecs`, `database` and `observability` modules, and `envs/prod`
-- [ ] Ephemeral apply, capture evidence, then `destroy`
+### Phase 4: Ephemeral deploy and evidence
+- [ ] Apply, seed sample data and run a smoke test
+- [ ] Load test with k6 and capture the dashboard
+- [ ] Simulate a spot interruption and measure recovery
+- [ ] Restore the database from a snapshot
+- [ ] Destroy and confirm that nothing is left running
 
-### Phase 6: Documentation
-- [ ] README with diagram, cost table and guardrails
-- [ ] ADRs in `docs/adr/`
-
-## ADRs to write
-
-Written: [0001 Rewrite the existing Flyway migrations for PostgreSQL](adr/0001-rewrite-migrations-for-postgresql.md).
-
-1. Ephemeral EC2 spot for demo instead of Fargate or Lambda + Aurora
-2. One directory per environment instead of workspaces
-3. Dynamic CloudFront origin for a backend with a changing IP
-4. Pessimistic quota with DynamoDB conditional writes
-5. GHCR for demo, ECR for prod
-6. Terraform vs CDK
+### Phase 5: Documentation
+- [ ] README with diagram, cost table and evidence
 
 ## Open decisions
 
-- Access codes for recruiters (proposed for after Phase 3).
-- Compatibility of the CloudFront flat-rate plan with Functions, KVS and Lambda origins.
+- Production domain.
+- CloudFront flat-rate free plan (includes WAF) if compatible with an EC2 origin; otherwise rate limiting in Spring with Bucket4j.
+- CloudFront VPC origins, which would move the instance to a private subnet and drop the public IPv4 cost, at the price of needing another way out to the internet.

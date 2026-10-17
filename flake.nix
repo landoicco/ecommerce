@@ -22,6 +22,7 @@
           maven
           nodejs_22      # frontend build, lint and Prettier
           jq             # used by the Claude Code formatting hook
+          gh             # PRs and CI from the terminal; credential helper for git push
         ];
 
         claude = nix-claude-code.packages.${system}.default;
@@ -40,6 +41,7 @@
             echo "   📦 Maven    ${pkgs.maven.version}"
             echo "   🟢 Node.js  ${pkgs.nodejs_22.version}"
             echo "   🔍 jq       ${pkgs.jq.version}"
+            echo "   🐙 gh       ${pkgs.gh.version}"
             echo "   🤖 Claude   $(claude --version | cut -d' ' -f1)"
             echo ""
           '';
