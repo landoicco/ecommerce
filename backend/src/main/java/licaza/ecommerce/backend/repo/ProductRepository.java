@@ -13,12 +13,12 @@ import org.springframework.stereotype.Repository;
 public interface ProductRepository extends JpaRepository<Product, Long> {
   List<String> findSkuBySkuIn(List<String> skus);
 
+  // searchTerm must not be null; an empty string matches every product
   @Query(
       "SELECT p FROM Product p WHERE "
-          + "(:searchTerm IS NULL OR "
-          + " LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
-          + " LOWER(p.sku) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
-          + " LOWER(p.category) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+          + "LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
+          + "LOWER(p.sku) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
+          + "LOWER(p.category) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
   Page<Product> findCatalogWithUniversalSearch(
       @Param("searchTerm") String searchTerm, Pageable pageable);
 }

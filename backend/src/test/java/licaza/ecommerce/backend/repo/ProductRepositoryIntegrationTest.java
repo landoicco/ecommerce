@@ -3,11 +3,13 @@ package licaza.ecommerce.backend.repo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
+import licaza.ecommerce.backend.TestcontainersConfiguration;
 import licaza.ecommerce.backend.domain.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
+@Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test") // Force the usage of application-test.properties
 class ProductRepositoryIntegrationTest {
 
@@ -22,7 +25,7 @@ class ProductRepositoryIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    // Add data to H2 database
+    // Add data to the PostgreSQL test container
     Product product1 = new Product();
     product1.setName("Database Testing Mouse");
     product1.setSku("SKU-REPO-TEST-01");
@@ -43,7 +46,7 @@ class ProductRepositoryIntegrationTest {
   }
 
   @Test
-  void findCatalogWithUniversalSearch_BySku_ReturnsFilteredProductFromH2() {
+  void findCatalogWithUniversalSearch_BySku_ReturnsFilteredProduct() {
     // Config standard pagination
     Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "price"));
 

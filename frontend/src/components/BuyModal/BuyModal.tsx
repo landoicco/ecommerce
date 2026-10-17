@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Product } from "@/commons/types";
 
 interface BuyModalProps {
@@ -8,12 +8,17 @@ interface BuyModalProps {
 }
 
 export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps) {
-  const [buyQuantity, setBuyQuantity] = useState<number>(1);
+  // "" lets the user clear the input while typing
+  const [buyQuantity, setBuyQuantity] = useState<number | "">(1);
+  const quantity = buyQuantity === "" ? 0 : buyQuantity;
 
-  // Restart to 1 each time when selecting a new product
-  useEffect(() => {
+  // Restart to 1 each time when selecting a new product. Done during render
+  // instead of in an effect, so the old quantity is never rendered
+  const [prevProduct, setPrevProduct] = useState(product);
+  if (product !== prevProduct) {
+    setPrevProduct(product);
     setBuyQuantity(1);
-  }, [product]);
+  }
 
   if (!product) return null;
 
@@ -40,8 +45,8 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
             {/* Remove button */}
             <button
               type="button"
-              disabled={buyQuantity <= 1}
-              onClick={() => setBuyQuantity(buyQuantity - 1)}
+              disabled={quantity <= 1}
+              onClick={() => setBuyQuantity(quantity - 1)}
               className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               -
@@ -58,7 +63,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
 
                 // Change state to empty if data is deleted
                 if (isNaN(val)) {
-                  setBuyQuantity("" as any);
+                  setBuyQuantity("");
                   return;
                 }
 
@@ -75,7 +80,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
               }}
               onBlur={() => {
                 // If user quit focus, change to back to 1
-                if (!buyQuantity || isNaN(buyQuantity)) setBuyQuantity(1);
+                if (!buyQuantity) setBuyQuantity(1);
               }}
               className="w-12 h-6 bg-white border border-gray-200 text-gray-800 text-center rounded font-semibold focus:outline-none focus:border-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
@@ -83,8 +88,8 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
             {/* Add button */}
             <button
               type="button"
-              disabled={buyQuantity >= product.stock}
-              onClick={() => setBuyQuantity(buyQuantity + 1)}
+              disabled={quantity >= product.stock}
+              onClick={() => setBuyQuantity(quantity + 1)}
               className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               +
@@ -96,7 +101,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
         <div className="flex justify-between items-center text-gray-500 font-medium mb-4 px-1">
           <span>Total:</span>
           <span className="text-base font-bold text-gray-900 font-sans">
-            ${(product.price * buyQuantity).toFixed(2)}
+            ${(product.price * quantity).toFixed(2)}
           </span>
         </div>
 
@@ -111,7 +116,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(product, buyQuantity)}
+            onClick={() => onConfirm(product, quantity)}
             className="w-1/2 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded font-medium cursor-pointer transition-colors"
           >
             Confirm Buy

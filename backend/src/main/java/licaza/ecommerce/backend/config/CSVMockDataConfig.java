@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.service.ProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CSVMockDataConfig implements CommandLineRunner {
+
+  private static final Logger log = LoggerFactory.getLogger(CSVMockDataConfig.class);
 
   private final ProductService productService;
 
@@ -36,11 +40,10 @@ public class CSVMockDataConfig implements CommandLineRunner {
               // If there is an error, log it and move to next line
               .withExceptionHandler(
                   exception -> {
-                    System.err.println(
-                        "WARN: CSV row ignored due to formatting error on line "
-                            + exception.getLineNumber()
-                            + ". Detail: "
-                            + exception.getMessage());
+                    log.warn(
+                        "⏭️ CSV row ignored due to formatting error on line {}. Detail: {}",
+                        exception.getLineNumber(),
+                        exception.getMessage());
                     return null;
                   })
               .build();
@@ -49,7 +52,7 @@ public class CSVMockDataConfig implements CommandLineRunner {
       List<CSVProductRow> validRows = csvToBean.parse();
 
       if (validRows.isEmpty()) {
-        System.out.println("WARN: The CSV file did not contain any valid rows to process.");
+        log.warn("📦 The CSV file did not contain any valid rows to process.");
         return;
       }
 
@@ -71,18 +74,14 @@ public class CSVMockDataConfig implements CommandLineRunner {
       // Save all valid products on a batch
       List<ProductResponseDTO> savedBatch = productService.createProductsBatch(dtoList);
 
-      System.out.println(
-          "INFO: [CSV Success] Processed "
-              + dtoList.size()
-              + " valid lines. "
-              + "Successfully saved "
-              + savedBatch.size()
-              + " products in bulk.");
+      log.info(
+          "📦 Processed {} valid CSV lines. Saved {} products in bulk.",
+          dtoList.size(),
+          savedBatch.size());
 
     } catch (Exception e) {
       // If there is a critical error
-      System.err.println(
-          "ERROR: Critical and unexpected failure reading CSV file: " + e.getMessage());
+      log.error("❌ Unexpected failure reading the CSV file", e);
     }
   }
 }

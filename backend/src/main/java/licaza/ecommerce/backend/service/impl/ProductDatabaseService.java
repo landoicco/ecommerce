@@ -13,6 +13,8 @@ import licaza.ecommerce.backend.dto.*;
 import licaza.ecommerce.backend.exception.*;
 import licaza.ecommerce.backend.repo.*;
 import licaza.ecommerce.backend.service.ProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductDatabaseService implements ProductService {
+
+  private static final Logger log = LoggerFactory.getLogger(ProductDatabaseService.class);
 
   private final ProductRepository productRepository;
   private final OrderRepository orderRepository;
@@ -72,33 +76,28 @@ public class ProductDatabaseService implements ProductService {
             .filter(
                 dto -> {
                   if (dto.price() == null) {
-                    System.out.println(
-                        "WARN: Skipping CSV row. Product with SKU '"
-                            + dto.sku()
-                            + "' has an invalid or missing price.");
+                    log.warn(
+                        "⏭️ Skipping CSV row. Product with SKU '{}' has an invalid or missing price.",
+                        dto.sku());
                     return false;
                   }
                   if (dto.stock() == null) {
-                    System.out.println(
-                        "WARN: Skipping CSV row. Product with SKU '"
-                            + dto.sku()
-                            + "' has an invalid or missing stock.");
+                    log.warn(
+                        "⏭️ Skipping CSV row. Product with SKU '{}' has an invalid or missing stock.",
+                        dto.sku());
                     return false;
                   }
                   if (!seenSkusInBatch.add(dto.sku())) {
-                    System.out.println(
-                        "WARN: Skipping CSV row. SKU '"
-                            + dto.sku()
-                            + "' is duplicated within the same CSV file.");
+                    log.warn(
+                        "⏭️ Skipping CSV row. SKU '{}' is duplicated within the same CSV file.",
+                        dto.sku());
                     return false;
                   }
 
                   // Validate using existing SKU set from database
                   if (existingSkusSet.contains(dto.sku())) {
-                    System.out.println(
-                        "WARN: Skipping product from CSV. SKU '"
-                            + dto.sku()
-                            + "' already exists in the database.");
+                    log.warn(
+                        "⏭️ Skipping CSV row. SKU '{}' already exists in the database.", dto.sku());
                     return false;
                   }
                   return true;
@@ -120,7 +119,7 @@ public class ProductDatabaseService implements ProductService {
             .collect(Collectors.toList());
 
     if (productsToSave.isEmpty()) {
-      System.out.println("INFO: No new or valid products found in the CSV to insert.");
+      log.info("📦 No new or valid products found in the CSV to insert.");
       return List.of();
     }
 
@@ -172,7 +171,11 @@ public class ProductDatabaseService implements ProductService {
               + ", Available: "
               + product.getStock()
               + ")";
-      System.out.println("WARN: " + outOfStockMsg);
+      log.warn(
+          "📉 Insufficient stock for product {} (requested: {}, available: {})",
+          product.getId(),
+          purchaseDTO.quantity(),
+          product.getStock());
 
       throw new InsufficientStockException(outOfStockMsg);
     }
@@ -203,7 +206,7 @@ public class ProductDatabaseService implements ProductService {
        *  card declined. This will be triggered when requesting exactly 99 items.
        */
       if (purchaseDTO.quantity() == 99) {
-        System.out.println("INFO: Simulating a declined payment gateway transition.");
+        log.info("💳 Simulating a declined payment for order {}", order.getId());
         String msg = "Card declined. Insufficient funds.";
         order.setStatus(OrderStatus.FAILED);
         orderRepository.save(order);
@@ -215,12 +218,12 @@ public class ProductDatabaseService implements ProductService {
       order = orderRepository.save(order);
 
       String msg = "INFO: Checkout transition completed successfully. Order PAID.";
-      System.out.println(msg);
+      log.info("✅ Checkout completed for order {}", order.getId());
       return convertToOrderResponseDTO(order, msg);
 
     } catch (ObjectOptimisticLockingFailureException e) {
       // Handling Race Conditions
-      System.err.println("WARN: Race condition detected. Updating order status to FAILED.");
+      log.warn("🔒 Concurrent stock update on order {}. Marking it as FAILED.", order.getId());
       order.setStatus(OrderStatus.FAILED);
       order = orderRepository.save(order); // We save the FAILED order for persistance
 
@@ -232,7 +235,7 @@ public class ProductDatabaseService implements ProductService {
       throw new CheckoutFailedException(conflictMsg, failedOrderDTO);
     } catch (Exception e) {
       String errorMsg = "ERROR: Checkout failed. " + e.getMessage();
-      System.err.println("WARN: Payment failed. Rolling back stock transition.");
+      log.warn("❌ Checkout failed for order {}. Rolling back stock.", order.getId(), e);
 
       order.setStatus(OrderStatus.FAILED);
       orderRepository.save(order); // Save the order as FAILED
@@ -253,9 +256,9 @@ public class ProductDatabaseService implements ProductService {
     Pageable pageable =
         PageRequest.of(queryDTO.page(), queryDTO.size(), Sort.by(direction, queryDTO.sortBy()));
 
-    // Clean of search term
-    String searchFilter =
-        (queryDTO.search() != null && !queryDTO.search().isBlank()) ? queryDTO.search() : null;
+    // Never pass null: PostgreSQL cannot infer the type of a null parameter and rejects the query.
+    // An empty term turns every LIKE into '%%', which matches all products.
+    String searchFilter = queryDTO.search() != null ? queryDTO.search().strip() : "";
 
     // Run unified search
     Page<Product> productPage =

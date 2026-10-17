@@ -6,5 +6,4 @@ Dockerfile
 .dockerignore
 .prettierrc
 .prettierignore
-package-lock.json
 README.md

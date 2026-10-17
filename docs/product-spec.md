@@ -1,76 +1,91 @@
 # Product Spec
 
-> Working name: **MiFondita**. Final name and production domain are not decided yet.
+> Name: **itacatl**. In Nahuatl, *itacatl* is the food you carry for the road ("despensa para el camino", Molina 1571; see the [Gran Diccionario Náhuatl](https://gdn.iib.unam.mx/diccionario/itacatl)). It is the root of the Mexican Spanish *itacate*. The production domain is not decided yet.
 
 ## Vision
 
-A multi-tenant marketplace for *fondas* and *cocinas económicas*: small, often informal Mexican eateries whose menu changes every day. Each fonda publishes its daily menu; diners browse today's menus across fondas, pick the one they like, and reserve their food for pickup.
+An e-commerce platform for small Mexican businesses whose menu changes over time and whose stock runs out: *fondas* with a daily *comida corrida*, *neverías* with seasonal flavors, *pulquerías* with the *curados* of the day, a barbacoa stand that only opens on Sundays. Businesses publish their menu; customers find what they want, reserve it before it sells out, pay, and pick it up.
+
+It works like a regular e-commerce. What makes it different is that menus are **dynamic**: they are valid for a specific service window and have limited stock.
+
+**One deploy is one marketplace for one vertical** (fondas, neverías, pulquerías…), with many businesses inside. The vertical is configuration (branding, texts, categories, seed data), not code. The demo deploy targets fondas.
 
 The project has three goals:
 
 1. **Infrastructure:** clean, robust and very cheap (demo capped at ~$1/month), with an optional production-grade setup. See [infra-plan.md](infra-plan.md).
 2. **Engineering showcase:** production-quality Java, Spring Boot and React.
-3. **A real use case:** built around how fondas actually operate in Mexico (daily menus, limited portions, cash or bank transfer, WhatsApp).
+3. **A real use case:** built around how these businesses actually operate in Mexico (changing menus, limited stock, cash or bank transfer, WhatsApp).
+
+## Core flow
+
+**Find → reserve → pay → pick up** (or eat on site, when the business allows it).
+
+Every feature must make one of these steps better. Anything else goes to [Later](#later) or [Non-goals](#non-goals).
 
 ## Roles
 
 | Role | Description |
 |---|---|
-| Platform admin | Manages the platform and the fondas registered on it |
-| Fonda owner | Registers a fonda, manages its profile, menu, staff and settings |
-| Fonda staff | Updates availability and handles orders (confirm payments, mark ready or delivered) |
-| Diner | Browses menus, reserves orders, subscribes to fondas. No account: name + WhatsApp-verified phone |
+| Platform admin | Manages the platform and the businesses registered on it |
+| Business owner | Registers a business, manages its profile, schedule, menu, staff and settings |
+| Business staff | Updates availability and handles orders (confirm payments, mark ready or delivered) |
+| Customer | Browses menus and reserves orders. No account: name + WhatsApp-verified phone |
 
 ## Multi-tenancy
 
-- One deployment hosts many fondas; each fonda is a tenant with its own menu, data and users.
+- One deployment hosts many businesses; each business is a tenant with its own menu, data and users.
 - Shared database and schema with a `tenant_id` discriminator (Hibernate `@TenantId`).
 - PostgreSQL Row-Level Security as a second layer of tenant isolation.
 
-## Daily menu
+## Schedule and menus
 
-- **Structure:** a *comida corrida* combo made of courses (soup, rice or pasta, main dish, dessert, drink of the day) at a fixed price, plus à la carte dishes.
-- **Portions:** each dish on today's menu has a limited number of portions.
+- **Weekly schedule:** each business defines its service hours per day of the week (e.g. Sunday 8:00–14:00), plus date exceptions (closed on a holiday, a special opening).
+- **A menu belongs to a service:** it is published for a specific date and time window, not just for "today". Customers can reserve in advance (e.g. Saturday for Sunday's barbacoa), from a per-business opening time for reservations.
+- **Items:** each menu item has a price and a limited stock. A *comida corrida* combo (soup, rice or pasta, main dish, dessert, drink of the day) is one item with its courses listed, not a special menu structure.
 - **Fast, mobile-first editing for owners:**
-  - Duplicate yesterday's menu.
-  - Pick from a catalog of recurring dishes.
-  - Mark a dish as sold out in one tap.
-- **Real-time availability for diners** (SSE or WebSockets), e.g. "3 portions of mole left".
+  - Duplicate a previous menu.
+  - Pick from a catalog of recurring items.
+  - Mark an item as sold out in one tap.
+- **Real-time availability for customers** (SSE or WebSockets), e.g. "3 portions of mole left".
 - **Sharing:** shareable link and image for WhatsApp.
+- **Alcohol:** items can be flagged as alcoholic for display. Verifying the customer's age is the business's responsibility, not the app's.
 
-## Discovery (diner)
+## Discovery (customer)
 
-- Browse today's menus across fondas.
-- Full-text search over today's dishes in Spanish ("who has chiles rellenos today?").
-- Filter by distance (PostGIS), price, and opening hours.
+- Browse menus of open or upcoming services across businesses. A closed business shows when it opens next instead of disappearing.
+- Full-text search over menu items in Spanish ("who has chiles rellenos today?").
+- Filter by distance (PostGIS), price, and time ("open now", "today", "this weekend").
 
 ## Orders
 
-### Payment methods, configurable per fonda
+### Fulfillment
 
-1. **Cash on pickup:** the order holds portions for a pickup window (e.g. 1 h). If it is not picked up, it expires and the portions return to the menu.
+Each business chooses what it accepts: pickup, eating on site, or both. The customer picks one when reserving. The order flow is the same; the window is an arrival window either way.
+
+### Payment methods, configurable per business
+
+1. **Cash on pickup:** the order holds stock for a pickup window (e.g. 1 h). If it is not picked up, it expires and the stock returns to the menu.
 2. **Bank transfer (SPEI):**
-   - The app shows the fonda's CLABE and a unique order reference to use as the transfer concept.
-   - The diner marks the order as paid and can optionally upload the receipt.
+   - The app shows the business's CLABE and a unique order reference to use as the transfer concept.
+   - The customer marks the order as paid.
    - Staff confirm the payment.
-3. **Payment gateway (future):** Mercado Pago or CoDi, as another adapter behind a payment port.
 
 ### Order states
 
 ```
 Cash:      RESERVED ──────────────────────────────────────► READY ─► DELIVERED
 Transfer:  PENDING_PAYMENT ─► PAYMENT_SUBMITTED ─► CONFIRMED ─► READY ─► DELIVERED
-Any active state ─► EXPIRED / CANCELLED   (portions return to the menu)
+Any active state ─► EXPIRED / CANCELLED   (stock returns to the menu)
 ```
 
 ### Rules
 
 - **Computed availability:** available = total − sold − active holds (`expires_at > now`). Expiry is correct even if no background job runs on time. A scheduled job only updates states and sends notifications.
-- **Concurrency:** optimistic locking prevents holding portions that no longer exist.
-- **Per-fonda time windows:** how long the diner has to submit a transfer and how long to pick up.
-- **Abuse protection:** a limit on active orders per phone number and a no-show history per diner.
+- **Concurrency:** optimistic locking prevents holding stock that no longer exists.
+- **Per-business time windows:** how long the customer has to submit a transfer and how long to pick up.
+- **Abuse protection:** a limit on active orders per phone number and a no-show history per customer.
 
-## Diner identity
+## Customer identity
 
 - No account: name + phone number verified through a WhatsApp one-time code.
 - **OTP rules:**
@@ -81,30 +96,43 @@ Any active state ─► EXPIRED / CANCELLED   (portions return to the menu)
 
 ## Notifications
 
-- **Notification port** with interchangeable adapters: WhatsApp (Meta Cloud API), Telegram, email (SES), web push.
+- **Notification port** with a single adapter for now: WhatsApp (Meta Cloud API).
 - **Use cases:**
   - OTP codes.
-  - A daily menu message from favorite fondas (opt-in subscription).
   - Order status updates.
-- **Cost:** WhatsApp charges per message. Daily menus are likely billed as marketing templates (the most expensive category), so the channel is a business decision and is capped by guardrails.
-- **Demo:**
-  - OTP codes are shown on screen, because Meta's free test number only reaches pre-verified numbers.
-  - A "send today's menu now" button replaces the scheduled send, since the demo backend is asleep most of the time.
+- **Cost:** WhatsApp charges per message, so sends are capped by guardrails.
+- **Demo:** OTP codes are shown on screen, because Meta's free test number only reaches pre-verified numbers.
 
 ## Mexico-specific defaults
 
 - Currency: MXN.
-- Time zone: `America/Mexico_City`.
-- Per-fonda daily cutoff and opening hours.
+- Time zone: `America/Mexico_City`. Schedules are stored as local times plus a zone ID, never as fixed offsets.
 - Spanish UI.
 
 ## Demo constraints
 
-- Data is ephemeral and resets on every session. The demo is seeded with sample fondas and menus.
+- Data is ephemeral and resets on every session. The demo is seeded with sample businesses and menus.
 - Registrations made during a session are lost when the instance shuts down.
-- Scheduled features (daily menu send) are triggered manually in the demo; they run on schedule only in prod.
+
+## Later
+
+Planned once the core flow, security and infrastructure are solid:
+
+- **Discovery with INEGI DENUE:** list businesses that have no menu in the app (name, location, SCIAN activity, e.g. `722511` for *comida corrida*), with a "see on Google Maps" link. They can claim their profile and start publishing menus. DENUE is free open data with a token-based API; Google Places was discarded for cost. Seed files committed to this repository must never include DENUE contact fields (phones, emails). Rate limits, license and update frequency still need to be checked.
+- Subscriptions: a message with the new menu from favorite businesses (opt-in). WhatsApp likely bills it as a marketing template, the most expensive category.
+- More notification adapters: Telegram, email (SES), web push.
+- Upload of the transfer receipt.
+- Payment gateway (Mercado Pago or CoDi), as another adapter behind a payment port.
+
+## Non-goals
+
+- Delivery.
+- Table management: seat reservations, waitlists, ordering from the table.
+- Reviews, ratings and loyalty programs.
+- Recurring calendar rules beyond a weekly schedule plus date exceptions.
+- Age verification.
 
 ## Open questions
 
-- Product name and production domain (e.g. `mifondita.com`).
+- Production domain.
 - Access codes for recruiters (see infra plan).

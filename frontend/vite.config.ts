@@ -11,6 +11,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Mirrors the /api routing of nginx and CloudFront during `npm run dev`
+    proxy: {
+      "/api": "http://localhost:8080",
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

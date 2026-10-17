@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   backend:
     build: backend/
@@ -12,6 +10,12 @@ services:
       - DB_URL=${DB_URL}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_PROFILES_ACTIVE=local
+    # Budget for the 2 GiB demo instance: backend 1 GiB, database 512 MiB, the rest for the OS
+    deploy:
+      resources:
+        limits:
+          memory: 1g
     healthcheck:
       test: ["CMD-SHELL", "${BACKEND_HEALTHCHECK_CMD}"]
       interval: 20s
@@ -23,29 +27,33 @@ services:
         condition: service_healthy
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        # Send backend URL as argument to Dockerfile
-        - VITE_API_BASE_URL=${BACKEND_PRODUCTS_URL}
+    build: frontend/
     image: ecommerce-client-img
     container_name: ecommerce-frontend-cont
     ports:
-      - "3000:80"
+      - "3000:8080"
     depends_on:
       backend:
         condition: service_healthy
 
   database:
-    image: mariadb:11.0
-    container_name: ecommerce-mariadb
+    image: postgres:18-alpine
+    container_name: ecommerce-postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
+    # Each connection costs memory; Hikari's default pool of 10 leaves room for admin sessions
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=20"]
+    deploy:
+      resources:
+        limits:
+          memory: 512m
     healthcheck:
-      test: ${DB_HEALTHCHECK_CMD}
+      # $$ defers expansion to the container, which has the POSTGRES_* variables
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 2s
       timeout: 20s
       retries: 10
     environment:
-      - MARIADB_ROOT_PASSWORD=${DB_USER}
-      - MYSQL_DATABASE=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}

@@ -82,19 +82,44 @@ infra/
 - State in S3 with `use_lockfile`.
 - `default_tags` on the provider: `Project`, `Env`, `ManagedBy`.
 
+## Repository safeguards
+
+Every change reaches `main` through a PR that passed CI. This is in place before the infrastructure work, because Phase 4 will apply Terraform on merges to `main`.
+
+**CI** (`.github/workflows/ci.yml`), on PRs to `main` and on pushes to `main`:
+
+| Job | Checks |
+|---|---|
+| `Backend` | `mvn verify`: Spotless, compilation, tests (Flyway migrations on PostgreSQL via Testcontainers) |
+| `Frontend` | `npm ci`, Prettier, ESLint, Vitest, build |
+| `Docker images` | Both Dockerfiles build |
+
+The workflow has read-only permissions, actions are pinned to a commit SHA, and Dependabot (`.github/dependabot.yml`) keeps those pins updated.
+
+**Ruleset on `main`** (configured in GitHub under *Settings → Rules → Rulesets*):
+
+- Restrict deletions and block force pushes.
+- Require a pull request before merging, with conversation resolution. Required approvals stay at 0: with a single maintainer, 1 would block every merge.
+- Require the status checks `Backend`, `Frontend` and `Docker images`, and require branches to be up to date before merging.
+- No bypass list, so the rules apply to the maintainer too.
+
+**Repository security settings** (free for public repositories): secret scanning with push protection, and Dependabot alerts.
+
 ## Work phases
 
 ### Phase 0: Prepare the app
 Infra-related app changes only; the product rework is tracked in [product-spec.md](product-spec.md).
 
-- [ ] Migrate from MariaDB to PostgreSQL (driver, Flyway migrations, compose)
-- [ ] Add `.env.example` and remove `.env` from the repo
-- [ ] Replace `System.out.println` with SLF4J and align on Java 21
-- [ ] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
-- [ ] Frontend: relative API path `/api`, read `config.json` (`mode: demo|prod`)
-- [ ] Landing page with backend state: asleep, waking up, ready, or out of quota
+- [x] Migrate from MariaDB to PostgreSQL (driver, Flyway migrations, compose)
+- [x] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
+- [x] Add `.env.example` and remove `.env` from the repo
+- [x] Replace `System.out.println` with SLF4J and align on Java 21
+- [x] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
+- [x] Frontend: relative API path `/api`
+- [ ] Landing page with backend state: asleep, waking up, ready, or out of quota; read `config.json` (`mode: demo|prod`) at runtime
+- [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy and the GHCR image paths contain the repository name.
 
-**Done when:** `docker compose up` works as before and the frontend no longer depends on `VITE_API_BASE_URL`.
+**Done when:** `docker compose up` works as before, the frontend no longer depends on `VITE_API_BASE_URL`, and the project is named `itacatl`.
 
 ### Phase 1: Bootstrap
 - [ ] Add to `flake.nix`: `terraform`, `awscli2`, `tflint`, `trivy`, `terraform-docs`, `infracost`
@@ -134,6 +159,8 @@ Infra-related app changes only; the product rework is tracked in [product-spec.m
 - [ ] ADRs in `docs/adr/`
 
 ## ADRs to write
+
+Written: [0001 Rewrite the existing Flyway migrations for PostgreSQL](adr/0001-rewrite-migrations-for-postgresql.md).
 
 1. Ephemeral EC2 spot for demo instead of Fargate or Lambda + Aurora
 2. One directory per environment instead of workspaces
