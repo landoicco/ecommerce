@@ -1,8 +1,11 @@
+# Fixed project name, so networks and volumes do not depend on the folder the repo is cloned into
+name: itacatl
+
 services:
   backend:
     build: backend/
-    image: ecommerce-backend-img
-    container_name: ecommerce-backend-cont
+    image: itacatl-backend
+    container_name: itacatl-backend
     ports:
       - "8080:8080"
     environment:
@@ -28,8 +31,8 @@ services:
 
   frontend:
     build: frontend/
-    image: ecommerce-client-img
-    container_name: ecommerce-frontend-cont
+    image: itacatl-frontend
+    container_name: itacatl-frontend
     ports:
       - "3000:8080"
     depends_on:
@@ -38,7 +41,7 @@ services:
 
   database:
     image: postgres:18-alpine
-    container_name: ecommerce-postgres
+    container_name: itacatl-db
     ports:
       - "5432:5432"
     # Each connection costs memory; Hikari's default pool of 10 leaves room for admin sessions

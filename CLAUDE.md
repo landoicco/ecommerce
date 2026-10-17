@@ -2,7 +2,7 @@
 
 ## Project
 
-Portfolio project. Currently a simple e-commerce CRUD (Spring Boot + React + MariaDB), being reworked into **MiFondita** (working name): a multi-tenant marketplace where *fondas* publish a daily menu and diners reserve food for pickup. It will be deployed to AWS with Terraform.
+Portfolio project **itacatl**. Currently a simple e-commerce CRUD (Spring Boot + React + PostgreSQL), being reworked into a multi-tenant marketplace where small businesses such as *fondas* publish dynamic menus and customers reserve food for pickup. It is built to be deployed to AWS with Terraform.
 
 Read these before planning any feature or infrastructure work:
 
@@ -13,7 +13,7 @@ The goal is learning: every technical choice should be one the maintainer can de
 
 ## Layout
 
-- `backend/`: Spring Boot 4 (Java 21), Maven, Flyway, JPA. Package root `licaza.ecommerce.backend`.
+- `backend/`: Spring Boot 4 (Java 21), Maven, Flyway, JPA. Package root `dev.licaza.itacatl`.
 - `frontend/`: React 19, TypeScript, Vite, Tailwind, Vitest.
 - `docker-compose.yml` + `.env` (git-ignored, copied from `.env.example`): local full stack (database, backend, frontend).
 - `docs/`: specs, plans, and ADRs in `docs/adr/`.
