@@ -256,9 +256,9 @@ public class ProductDatabaseService implements ProductService {
     Pageable pageable =
         PageRequest.of(queryDTO.page(), queryDTO.size(), Sort.by(direction, queryDTO.sortBy()));
 
-    // Clean of search term
-    String searchFilter =
-        (queryDTO.search() != null && !queryDTO.search().isBlank()) ? queryDTO.search() : null;
+    // Never pass null: PostgreSQL cannot infer the type of a null parameter and rejects the query.
+    // An empty term turns every LIKE into '%%', which matches all products.
+    String searchFilter = queryDTO.search() != null ? queryDTO.search().strip() : "";
 
     // Run unified search
     Page<Product> productPage =
