@@ -111,7 +111,7 @@ The workflow has read-only permissions, actions are pinned to a commit SHA, and 
 Infra-related app changes only; the product rework is tracked in [product-spec.md](product-spec.md).
 
 - [x] Migrate from MariaDB to PostgreSQL (driver, Flyway migrations, compose)
-- [ ] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
+- [x] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
 - [x] Add `.env.example` and remove `.env` from the repo
 - [x] Replace `System.out.println` with SLF4J and align on Java 21
 - [x] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
