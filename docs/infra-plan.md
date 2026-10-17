@@ -117,8 +117,9 @@ Infra-related app changes only; the product rework is tracked in [product-spec.m
 - [ ] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
 - [ ] Frontend: relative API path `/api`, read `config.json` (`mode: demo|prod`)
 - [ ] Landing page with backend state: asleep, waking up, ready, or out of quota
+- [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy and the GHCR image paths contain the repository name.
 
-**Done when:** `docker compose up` works as before and the frontend no longer depends on `VITE_API_BASE_URL`.
+**Done when:** `docker compose up` works as before, the frontend no longer depends on `VITE_API_BASE_URL`, and the project is named `itacatl`.
 
 ### Phase 1: Bootstrap
 - [ ] Add to `flake.nix`: `terraform`, `awscli2`, `tflint`, `trivy`, `terraform-docs`, `infracost`
