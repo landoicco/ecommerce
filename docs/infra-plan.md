@@ -114,7 +114,7 @@ Infra-related app changes only; the product rework is tracked in [product-spec.m
 - [ ] App CI on every PR and a ruleset on `main` (see [Repository safeguards](#repository-safeguards))
 - [x] Add `.env.example` and remove `.env` from the repo
 - [x] Replace `System.out.println` with SLF4J and align on Java 21
-- [ ] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
+- [x] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
 - [ ] Frontend: relative API path `/api`, read `config.json` (`mode: demo|prod`)
 - [ ] Landing page with backend state: asleep, waking up, ready, or out of quota
 - [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy and the GHCR image paths contain the repository name.

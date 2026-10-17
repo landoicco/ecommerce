@@ -8,5 +8,10 @@ RUN mvn package -DskipTests
 
 # Run packaged Spring app
 FROM eclipse-temurin:21-jre-alpine AS runner
+# Unprivileged user, so a compromised process does not run as root in the container
+RUN addgroup -S app && adduser -S app -G app
+# The JVM sizes its heap from the container memory limit, but its default of 25% wastes most of it
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 COPY --from=builder /app/target/ecommerce-backend.jar ecommerce-backend.jar
+USER app
 ENTRYPOINT ["java", "-jar", "ecommerce-backend.jar"]
