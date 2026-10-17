@@ -24,7 +24,7 @@ describe("ProductCard Component", () => {
     expect(screen.getByText("Premium Mechanical Keyboard")).toBeInTheDocument();
     expect(screen.getByText("KEY-MX80")).toBeInTheDocument();
     expect(screen.getByText("Peripherals")).toBeInTheDocument();
-    expect(screen.getByText("5 u")).toBeInTheDocument();
+    expect(screen.getByText("5 units")).toBeInTheDocument();
     expect(screen.getByText("1.2 kg")).toBeInTheDocument();
 
     // Verify price format is correct

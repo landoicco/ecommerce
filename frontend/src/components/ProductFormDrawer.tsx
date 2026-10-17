@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Product } from "@/commons/types";
 
 interface ProductFormDrawerProps {
@@ -17,6 +18,8 @@ export default function ProductFormDrawer({
   setFormData,
   onSubmit,
 }: ProductFormDrawerProps) {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -25,19 +28,23 @@ export default function ProductFormDrawer({
         <div>
           <div className="flex items-center justify-between pb-4 border-b border-gray-50">
             <h2 className="text-sm font-medium text-gray-900">
-              {editingProduct ? `Modify ${editingProduct.sku}` : "New Database Record"}
+              {editingProduct
+                ? t("productForm.editTitle", { sku: editingProduct.sku })
+                : t("productForm.createTitle")}
             </h2>
             <button
               onClick={onClose}
               className="text-xs text-gray-400 hover:text-gray-900 cursor-pointer"
             >
-              Close
+              {t("productForm.close")}
             </button>
           </div>
 
           <form id="crud-form" onSubmit={onSubmit} className="mt-6 space-y-4 text-xs">
             <div>
-              <label className="block font-medium text-gray-500 mb-1">Item Name</label>
+              <label className="block font-medium text-gray-500 mb-1">
+                {t("productForm.name")}
+              </label>
               <input
                 required
                 type="text"
@@ -48,7 +55,9 @@ export default function ProductFormDrawer({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium text-gray-500 mb-1">SKU</label>
+                <label className="block font-medium text-gray-500 mb-1">
+                  {t("productForm.sku")}
+                </label>
                 <input
                   required
                   type="text"
@@ -59,7 +68,9 @@ export default function ProductFormDrawer({
                 />
               </div>
               <div>
-                <label className="block font-medium text-gray-500 mb-1">Category</label>
+                <label className="block font-medium text-gray-500 mb-1">
+                  {t("productForm.category")}
+                </label>
                 <input
                   required
                   type="text"
@@ -70,7 +81,9 @@ export default function ProductFormDrawer({
               </div>
             </div>
             <div>
-              <label className="block font-medium text-gray-500 mb-1">Description</label>
+              <label className="block font-medium text-gray-500 mb-1">
+                {t("productForm.description")}
+              </label>
               <textarea
                 rows={4}
                 value={formData.description}
@@ -80,7 +93,9 @@ export default function ProductFormDrawer({
             </div>
             <div className="grid grid-cols-3 gap-3 font-mono">
               <div>
-                <label className="block font-sans font-medium text-gray-500 mb-1">Price ($)</label>
+                <label className="block font-sans font-medium text-gray-500 mb-1">
+                  {t("productForm.price")}
+                </label>
                 <input
                   required
                   type="number"
@@ -93,7 +108,9 @@ export default function ProductFormDrawer({
                 />
               </div>
               <div>
-                <label className="block font-sans font-medium text-gray-500 mb-1">Stock</label>
+                <label className="block font-sans font-medium text-gray-500 mb-1">
+                  {t("productForm.stock")}
+                </label>
                 <input
                   required
                   type="number"
@@ -106,7 +123,7 @@ export default function ProductFormDrawer({
               </div>
               <div>
                 <label className="block font-sans font-medium text-gray-500 mb-1">
-                  Weight (kg)
+                  {t("productForm.weight")}
                 </label>
                 <input
                   required
@@ -125,7 +142,7 @@ export default function ProductFormDrawer({
                 type="submit"
                 className="px-4 py-2 bg-gray-900 text-white font-medium rounded hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                {editingProduct ? "Save Changes" : "Create Record"}
+                {editingProduct ? t("productForm.save") : t("productForm.create")}
               </button>
             </div>
           </form>

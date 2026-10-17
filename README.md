@@ -17,8 +17,8 @@ This is a work in progress, built in the open.
 | Milestone | State |
 |---|---|
 | PostgreSQL, CI, ruleset on `main`, hardened containers | ✅ Done |
-| Internationalization foundation (`en`, `es-MX`) | 🚧 Next |
-| Marketplace domain: businesses, menus, reservations | 📋 Planned |
+| Internationalization foundation (`en`, `es-MX`) | ✅ Done |
+| Marketplace domain: businesses, menus, reservations | 🚧 Next |
 | Terraform: bootstrap, modules, CI/CD | 📋 Planned |
 | Ephemeral AWS deploy with load test and recovery evidence | 📋 Planned |
 
@@ -37,12 +37,13 @@ What makes it different from a generic store is that menus are **dynamic**: they
 
 ## Built for translation
 
-The codebase is in English; the first deployment serves Mexican users in Spanish. Internationalization is a design rule, not an afterthought, and its foundation is the next milestone:
+The codebase is in English; the first deployment serves Mexican users in Spanish. Internationalization is a design rule, not an afterthought:
 
-- No hardcoded UI text: every string lives in a per-locale catalog (`en`, `es-MX`), and CI fails when a translation is missing.
-- The API returns stable error codes, never sentences, so the client translates them.
-- Prices, dates and times are formatted per locale (MXN, `America/Mexico_City`).
-- The default language is set per deployment; users can switch.
+- No hardcoded UI text: every string lives in a per-locale catalog (`en`, `es-MX`) in `frontend/src/i18n/locales/`.
+- Translation keys are type-checked against the English catalog, so a typo fails the build; a test fails CI when another locale is missing a key or a placeholder.
+- Prices and units go through `Intl` formatters, never string concatenation.
+- The default language is set per deployment with `VITE_DEFAULT_LOCALE` (`en` when unset); users can switch, and the choice is remembered.
+- The API will return stable error codes instead of sentences, so the client translates them (with the new orders API).
 
 Details in the [product spec](docs/product-spec.md#internationalization).
 
