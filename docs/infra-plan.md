@@ -12,17 +12,22 @@ Assumptions: the account has no credits or 12-month free tier (only *always-free
 
 ## Architecture
 
-```
-app domain (alias record, ACM certificate)
-        │
-   CloudFront ── /*      → S3: frontend build (OAC)
-              ── /api/*  → EC2 backend (origin restricted to CloudFront)
-
-   VPC (2 AZs, no NAT)
-   ├── public subnets:  EC2 Auto Scaling group (min = max = 1, spot)
-   └── private subnets: RDS PostgreSQL (single-AZ)
-
-   Backend ─► SQS ─► Lambda ─► WhatsApp Cloud API   (notifications, with DLQ)
+```mermaid
+flowchart LR
+    user([Browser]) -->|"app domain<br/>Route 53 alias, ACM"| cf[CloudFront]
+    cf -->|"/* (OAC)"| s3[("S3<br/>frontend build")]
+    cf -->|"/api/*<br/>CloudFront prefix list only"| ec2
+    subgraph vpc ["VPC: 2 AZs, no NAT"]
+        subgraph public [public subnets]
+            ec2["EC2 Auto Scaling group<br/>min = max = 1, spot"]
+        end
+        subgraph private [private subnets]
+            rds[("RDS PostgreSQL<br/>single-AZ")]
+        end
+        ec2 --> rds
+    end
+    ec2 --> sqs[SQS] --> lambda[Lambda] --> wa([WhatsApp Cloud API])
+    sqs -.-> dlq[(DLQ)]
 ```
 
 - **Backend:** an Auto Scaling group of one instance using a mixed instances policy with spot capacity (`price-capacity-optimized` across several Graviton types) and capacity rebalancing. The ASG replaces the instance when it is reclaimed or fails. A variable switches to on-demand. The instance runs the backend image with Docker; the database never runs on it.
