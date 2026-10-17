@@ -2,11 +2,6 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Get arg from docker-compose
-ARG VITE_API_BASE_URL
-# Define arg as env variable
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
 COPY package*.json ./
 # npm ci installs exactly what package-lock.json pins, so builds are reproducible
 RUN npm ci
@@ -22,5 +17,6 @@ USER root
 RUN rm -rf ./*
 USER 101
 COPY --from=builder /app/dist .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

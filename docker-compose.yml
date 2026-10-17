@@ -27,11 +27,7 @@ services:
         condition: service_healthy
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        # Send backend URL as argument to Dockerfile
-        - VITE_API_BASE_URL=${BACKEND_PRODUCTS_URL}
+    build: frontend/
     image: ecommerce-client-img
     container_name: ecommerce-frontend-cont
     ports:

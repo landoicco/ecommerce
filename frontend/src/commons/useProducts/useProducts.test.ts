@@ -30,9 +30,9 @@ describe("useProducts Hook", () => {
       expect(result.current.products).toHaveLength(1);
     });
 
-    // Validate fetch
+    // Relative path: each environment routes /api to the backend (Vite proxy, nginx, CloudFront)
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/catalog?size=12&page=0&sortBy=price&sortDir=desc")
+      "/api/products/catalog?size=12&page=0&sortBy=price&sortDir=desc&search="
     );
 
     expect(result.current.page).toBe(1);

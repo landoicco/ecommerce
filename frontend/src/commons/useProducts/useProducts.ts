@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import type { Product } from "@/commons/types";
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+// Same-origin path, so one build runs everywhere: each environment routes /api to the backend
+// (Vite proxy in dev, nginx in docker compose, CloudFront in AWS)
+const API_URL = "/api/products";
 
 interface PurchaseResponse {
   status: string;
