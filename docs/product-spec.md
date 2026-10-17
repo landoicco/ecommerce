@@ -114,7 +114,7 @@ Any active state can also move to `EXPIRED` or `CANCELLED`, and the held stock r
 
 ## Internationalization
 
-Code, API, logs and docs are in English; deployments serve their users in their own language, Spanish (`es-MX`) first. The rule is that nothing a user reads is hardcoded.
+Code, API, logs and docs are in English; deployments serve their users in their own language, Spanish (`es-MX`) first. The rule is that nothing a user reads is hardcoded. The [i18n guide](i18n.md) explains how the frontend implements it.
 
 - **Frontend:** `react-i18next`, one JSON catalog per locale (`en`, `es-MX`) with English keys grouped by screen. A test fails when the catalogs do not have the same keys.
 - **API errors:** stable codes (e.g. `ITEM_SOLD_OUT`) plus parameters, never sentences; the client translates them.
