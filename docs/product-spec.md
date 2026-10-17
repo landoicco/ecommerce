@@ -72,11 +72,20 @@ Each business chooses what it accepts: pickup, eating on site, or both. The cust
 
 ### Order states
 
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> RESERVED: cash
+    [*] --> PENDING_PAYMENT: transfer
+    PENDING_PAYMENT --> PAYMENT_SUBMITTED: customer marks as paid
+    PAYMENT_SUBMITTED --> CONFIRMED: staff confirm
+    RESERVED --> READY
+    CONFIRMED --> READY
+    READY --> DELIVERED
+    DELIVERED --> [*]
 ```
-Cash:      RESERVED ──────────────────────────────────────► READY ─► DELIVERED
-Transfer:  PENDING_PAYMENT ─► PAYMENT_SUBMITTED ─► CONFIRMED ─► READY ─► DELIVERED
-Any active state ─► EXPIRED / CANCELLED   (stock returns to the menu)
-```
+
+Any active state can also move to `EXPIRED` or `CANCELLED`, and the held stock returns to the menu.
 
 ### Rules
 
@@ -103,11 +112,22 @@ Any active state ─► EXPIRED / CANCELLED   (stock returns to the menu)
 - **Cost:** WhatsApp charges per message, so sends are capped (see the OTP rules above).
 - **Local profile:** OTP codes are logged instead of sent, so the app can be tried without a WhatsApp Business account.
 
+## Internationalization
+
+Code, API, logs and docs are in English; deployments serve their users in their own language, Spanish (`es-MX`) first. The rule is that nothing a user reads is hardcoded.
+
+- **Frontend:** `react-i18next`, one JSON catalog per locale (`en`, `es-MX`) with English keys grouped by screen. A test fails when the catalogs do not have the same keys.
+- **API errors:** stable codes (e.g. `ITEM_SOLD_OUT`) plus parameters, never sentences; the client translates them.
+- **Server-generated text** (WhatsApp messages): Spring `MessageSource` bundles, rendered in the customer's locale.
+- **Formatting:** numbers, prices and dates go through locale-aware formatters (`Intl` in the browser), never string concatenation.
+- **Locale selection:** each deployment sets a default locale, like the vertical; users can switch, and the choice is remembered.
+- **Business content** (menu items, descriptions) is stored as the business writes it, not machine-translated.
+
 ## Mexico-specific defaults
 
 - Currency: MXN.
 - Time zone: `America/Mexico_City`. Schedules are stored as local times plus a zone ID, never as fixed offsets.
-- Spanish UI.
+- Default locale: `es-MX` (see [Internationalization](#internationalization)).
 
 ## Sample data
 
