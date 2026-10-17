@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Product } from "@/commons/types";
+import { formatCurrency } from "@/i18n/format";
 
 // Same-origin path, so one build runs everywhere: each environment routes /api to the backend
 // (Vite proxy in dev, nginx in docker compose, CloudFront in AWS)
 const API_URL = "/api/products";
 
 interface PurchaseResponse {
-  status: string;
+  status: "PENDING" | "PAID" | "FAILED";
   totalAmount: number;
   message: string;
 }
 
 export function useProducts(searchQuery: string) {
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
@@ -64,7 +67,7 @@ export function useProducts(searchQuery: string) {
       triggerRefresh();
     } catch (err) {
       console.error(err);
-      alert("Error saving product");
+      alert(t("errors.saveProduct"));
     }
   };
 
@@ -80,7 +83,7 @@ export function useProducts(searchQuery: string) {
       triggerRefresh();
     } catch (err) {
       console.error(err);
-      alert("Error updating product");
+      alert(t("errors.updateProduct"));
     }
   };
 
@@ -97,7 +100,7 @@ export function useProducts(searchQuery: string) {
       triggerRefresh();
     } catch (err) {
       console.error(err);
-      alert("Could not delete product from database");
+      alert(t("errors.deleteProduct"));
     }
   };
 
@@ -121,15 +124,18 @@ export function useProducts(searchQuery: string) {
       try {
         // Try to parse as JSON
         const data: PurchaseResponse = JSON.parse(rawText);
+        // The backend message is still an English sentence; it becomes an error code
+        // with the new orders API
         const msg =
-          `YOUR PURCHASE STATUS:\n\n` +
-          `• Status: ${data.status}\n` +
-          `• Total to pay: ${data.totalAmount}\n` +
-          `• Message: ${data.message}\n`;
+          `${t("purchase.title")}:\n\n` +
+          `• ${t("purchase.status")}: ${t(`purchase.orderStatus.${data.status}`)}\n` +
+          `• ${t("purchase.total")}: ${formatCurrency(data.totalAmount, i18n.language)}\n` +
+          `• ${t("purchase.message")}: ${data.message}\n`;
         alert(msg);
       } catch {
         // If parse fail, then is plain text
-        const msg = `BACKEND SAYS:\n\n` + `• Message: ${rawText}\n`;
+        const msg =
+          `${t("purchase.backendSays")}:\n\n` + `• ${t("purchase.message")}: ${rawText}\n`;
         alert(msg);
       }
       triggerRefresh();

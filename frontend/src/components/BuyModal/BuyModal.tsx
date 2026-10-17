@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Product } from "@/commons/types";
+import { formatCurrency } from "@/i18n/format";
 
 interface BuyModalProps {
   product: Product | null;
@@ -8,6 +10,7 @@ interface BuyModalProps {
 }
 
 export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps) {
+  const { t, i18n } = useTranslation();
   // "" lets the user clear the input while typing
   const [buyQuantity, setBuyQuantity] = useState<number | "">(1);
   const quantity = buyQuantity === "" ? 0 : buyQuantity;
@@ -28,10 +31,13 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
         <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="font-semibold text-gray-900 text-sm">{product.name}</h3>
-            <p className="text-gray-400 font-mono mt-0.5 text-[10px]">SKU: {product.sku}</p>
+            <p className="text-gray-400 font-mono mt-0.5 text-[10px]">
+              {t("buyModal.sku", { sku: product.sku })}
+            </p>
           </div>
           <button
             onClick={onClose}
+            aria-label={t("buyModal.close")}
             className="text-gray-400 hover:text-gray-600 font-medium text-sm cursor-pointer"
           >
             ✕
@@ -40,13 +46,14 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
 
         {/* Quantity selector */}
         <div className="my-4 bg-gray-50 rounded-lg p-3 border border-gray-100/80 flex items-center justify-between">
-          <span className="text-gray-500 font-medium">Quantity:</span>
+          <span className="text-gray-500 font-medium">{t("buyModal.quantity")}</span>
           <div className="flex items-center gap-2 font-mono">
             {/* Remove button */}
             <button
               type="button"
               disabled={quantity <= 1}
               onClick={() => setBuyQuantity(quantity - 1)}
+              aria-label={t("buyModal.decrease")}
               className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               -
@@ -90,6 +97,7 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
               type="button"
               disabled={quantity >= product.stock}
               onClick={() => setBuyQuantity(quantity + 1)}
+              aria-label={t("buyModal.increase")}
               className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold transition-colors cursor-pointer flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               +
@@ -99,9 +107,9 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
 
         {/* Summary and costs */}
         <div className="flex justify-between items-center text-gray-500 font-medium mb-4 px-1">
-          <span>Total:</span>
+          <span>{t("buyModal.total")}</span>
           <span className="text-base font-bold text-gray-900 font-sans">
-            ${(product.price * quantity).toFixed(2)}
+            {formatCurrency(product.price * quantity, i18n.language)}
           </span>
         </div>
 
@@ -112,14 +120,14 @@ export default function BuyModal({ product, onClose, onConfirm }: BuyModalProps)
             onClick={onClose}
             className="w-1/2 py-2 border border-gray-200 rounded text-gray-500 hover:bg-gray-50 font-medium cursor-pointer transition-colors"
           >
-            Cancel
+            {t("buyModal.cancel")}
           </button>
           <button
             type="button"
             onClick={() => onConfirm(product, quantity)}
             className="w-1/2 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded font-medium cursor-pointer transition-colors"
           >
-            Confirm Buy
+            {t("buyModal.confirm")}
           </button>
         </div>
       </div>

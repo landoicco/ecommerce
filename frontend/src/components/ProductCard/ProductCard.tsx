@@ -1,4 +1,6 @@
+import { useTranslation } from "react-i18next";
 import type { Product } from "@/commons/types";
+import { formatCurrency, formatWeightKg } from "@/i18n/format";
 
 interface ProductCardProps {
   product: Product;
@@ -8,6 +10,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onDelete, onEdit, onBuy }: ProductCardProps) {
+  const { t, i18n } = useTranslation();
   const isOutOfStock = product.stock <= 0;
 
   return (
@@ -16,7 +19,7 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
         {/* Top Metadata Row */}
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-medium tracking-widest text-gray-400 uppercase">
-            {product.category || "General"}
+            {product.category || t("productCard.defaultCategory")}
           </span>
           <span className="text-[10px] font-mono bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-100/50">
             {product.sku}
@@ -37,20 +40,25 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
         {/* Specs Row */}
         <div className="grid grid-cols-2 gap-2 pb-3 text-[11px] text-gray-400 border-b border-gray-50 font-mono">
           <div>
-            Stock:{" "}
+            {t("productCard.stock")}{" "}
             <span className={!isOutOfStock ? "text-gray-600" : "text-red-400 font-medium"}>
-              {isOutOfStock ? "Out of stock" : `${product.stock} u`}
+              {isOutOfStock
+                ? t("productCard.outOfStock")
+                : t("productCard.units", { count: product.stock })}
             </span>
           </div>
           <div className="text-right">
-            Weight: <span className="text-gray-600">{product.weightKg} kg</span>
+            {t("productCard.weight")}{" "}
+            <span className="text-gray-600">{formatWeightKg(product.weightKg, i18n.language)}</span>
           </div>
         </div>
 
         {/* Price & Actions Row */}
         <div className="mt-3 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-base font-bold text-gray-900">${product.price.toFixed(2)}</span>
+            <span className="text-base font-bold text-gray-900">
+              {formatCurrency(product.price, i18n.language)}
+            </span>
 
             {/* Quick admin controls on hover */}
             <div className="flex items-center gap-2 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -58,14 +66,14 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
                 onClick={() => onEdit(product)}
                 className="text-[10px] text-gray-400 hover:text-gray-700 cursor-pointer"
               >
-                Edit
+                {t("productCard.edit")}
               </button>
               <span className="text-[9px] text-gray-200">|</span>
               <button
                 onClick={() => onDelete(product.id)}
                 className="text-[10px] text-gray-400 hover:text-red-500 cursor-pointer"
               >
-                Delete
+                {t("productCard.delete")}
               </button>
             </div>
           </div>
@@ -78,7 +86,7 @@ export default function ProductCard({ product, onDelete, onEdit, onBuy }: Produc
                 : "bg-gray-900 text-white hover:bg-gray-800"
             }`}
           >
-            {isOutOfStock ? "Sold Out" : "Buy"}
+            {isOutOfStock ? t("productCard.soldOut") : t("productCard.buy")}
           </button>
         </div>
       </div>

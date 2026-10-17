@@ -42,7 +42,7 @@ describe("BuyModal Component", () => {
     const buttonPlus = screen.getByText("+");
     fireEvent.click(buttonPlus);
 
-    const totalText = screen.getByText("$2000.00");
+    const totalText = screen.getByText("$2,000.00");
     expect(totalText).toBeInTheDocument();
   });
 

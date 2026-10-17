@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useProducts } from "./commons/useProducts/useProducts";
 import type { Product } from "./commons/types";
 import ProductCard from "./components/ProductCard/ProductCard";
@@ -17,6 +18,7 @@ const EMPTY_FORM: Omit<Product, "id"> = {
 };
 
 export default function App() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -76,7 +78,7 @@ export default function App() {
 
         {error && (
           <div className="text-center py-4 max-w-md mx-auto">
-            <p className="text-xs font-mono text-red-500">Database connection failed: {error}</p>
+            <p className="text-xs font-mono text-red-500">{t("catalog.loadError")}</p>
           </div>
         )}
 
@@ -102,24 +104,22 @@ export default function App() {
                 onClick={() => setPage(page - 1)}
                 className="px-3 py-1.5 border border-gray-200 rounded bg-white hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                ← Previous
+                {t("catalog.previous")}
               </button>
 
-              <span>Page {page}</span>
+              <span>{t("catalog.page", { page })}</span>
 
               <button
                 disabled={!hasMore}
                 onClick={() => setPage(page + 1)}
                 className="px-3 py-1.5 border border-gray-200 rounded bg-white hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                Next →
+                {t("catalog.next")}
               </button>
             </div>
           </div>
         ) : (
-          !error && (
-            <p className="text-xs text-gray-400 text-center py-10">No items match your criteria.</p>
-          )
+          !error && <p className="text-xs text-gray-400 text-center py-10">{t("catalog.empty")}</p>
         )}
       </div>
 
