@@ -1,4 +1,4 @@
-# Simple E-Commerce CRUD Application
+# itacatl
 
 This is a lightweight e-commerce application designed to simulate a full product management workflow and a basic checkout process. It features a React frontend powered by a Java and Spring Boot backend, utilizing a containerized PostgreSQL database for robust and persistent data storage.
 
@@ -59,7 +59,7 @@ docker compose down -v
 ```
 
 **Looking for more details?** 
-Please check out our [Repository Wiki](https://github.com/landoicco/ecommerce/wiki) for in-depth information about:
+Please check out our [Repository Wiki](https://github.com/landoicco/itacatl/wiki) for in-depth information about:
 * **Architecture & Design Choices:** Explanations behind the technical decisions.
 * **API Documentation:** Comprehensive list of endpoints and usage examples.
 * **Project Structure:** How the codebase is organized.

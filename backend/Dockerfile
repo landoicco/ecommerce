@@ -12,6 +12,6 @@ FROM eclipse-temurin:21-jre-alpine AS runner
 RUN addgroup -S app && adduser -S app -G app
 # The JVM sizes its heap from the container memory limit, but its default of 25% wastes most of it
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
-COPY --from=builder /app/target/ecommerce-backend.jar ecommerce-backend.jar
+COPY --from=builder /app/target/itacatl.jar itacatl.jar
 USER app
-ENTRYPOINT ["java", "-jar", "ecommerce-backend.jar"]
+ENTRYPOINT ["java", "-jar", "itacatl.jar"]

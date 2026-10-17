@@ -36,7 +36,7 @@
           # (except Claude Code, whose package does not expose a version attribute reliably).
           shellHook = ''
             echo ""
-            echo "🛠️  ecommerce dev toolkit"
+            echo "🛠️  itacatl dev toolkit"
             echo "   ☕ Java     ${pkgs.jdk21_headless.version}"
             echo "   📦 Maven    ${pkgs.maven.version}"
             echo "   🟢 Node.js  ${pkgs.nodejs_22.version}"

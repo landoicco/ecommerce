@@ -1,7 +1,19 @@
 {
-  "name": "frontend",
+  "name": "itacatl-frontend",
   "private": true,
   "version": "0.0.0",
+  "description": "Frontend of itacatl, a marketplace where small businesses publish dynamic menus and customers reserve food for pickup",
+  "license": "MIT",
+  "author": {
+    "name": "Lando Icaza",
+    "url": "https://licaza.dev"
+  },
+  "homepage": "https://github.com/landoicco/itacatl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/landoicco/itacatl.git",
+    "directory": "frontend"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

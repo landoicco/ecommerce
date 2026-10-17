@@ -117,7 +117,7 @@ The product rework ([product-spec.md](product-spec.md)) runs after Phase 0 and b
 - [x] Replace `System.out.println` with SLF4J and align on Java 21
 - [x] Non-root user in the Dockerfiles; memory limits (JVM and PostgreSQL)
 - [x] Frontend: relative API path `/api`
-- [ ] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy contains the repository name.
+- [x] Rename the project to `itacatl` in a rename-only PR (Java package, Maven, compose, docs), then rename the GitHub repository. It must land before Phase 1, because the GitHub OIDC trust policy contains the repository name.
 
 **Done when:** `docker compose up` works as before and the project is named `itacatl`.
 
